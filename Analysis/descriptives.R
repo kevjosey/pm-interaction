@@ -1,5 +1,3 @@
-## Make table 1 ##
-
 library(survival)
 library(dplyr)
 library(haven)

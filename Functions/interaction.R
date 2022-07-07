@@ -48,7 +48,7 @@ add_interact_cox <- function(model, pm0, pm1, conf.level = 0.95) {
   W <- W.tmp - matrix(rep(model$means, each = nrow(W.tmp)), nrow = nrow(W.tmp))
   
   col1 <- length(model$coefficients)
-  col0 <- (lcol1 - 1)/2 + 1
+  col0 <- (col1 - 1)/2 + 1
   
   # these indexes change based on df of pspline()
   a2 <- W[2,2:col0] - W[1,2:col0]

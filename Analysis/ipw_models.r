@@ -292,8 +292,6 @@ for (i in 1:length(outvar_all)){
   rm(cpFit_last, cpFit_premed)
   gc()
 
-  ## Rubik's cube type algorithm
-
   # partition meds/no meds
   cpFit_drug <- subset(setDT(cpFit), !is.na(shift) & event == "changePM")
   cpFit_meds <- subset(setDT(cpFit), !is.na(shift))
@@ -318,6 +316,7 @@ for (i in 1:length(outvar_all)){
   falseifNA <- function(x){ ifelse(is.na(x), FALSE, x) }
   ifelse2 <- function(x, a, b){ ifelse(falseifNA(x), a, b) }
   
+  # annoying special cases
   cpFit_meds <- cpFit_meds[order(bene_id, time0, time1)
                            ][,season:=ifelse(event %in% c("changeDrug", "startMed") & !is.na(shift(season, n = 1, type = "lag")),
                                                shift(season, n = 1, type = "lag"), season), by = bene_id]

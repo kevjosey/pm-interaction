@@ -217,17 +217,3 @@ ipwtm_gee <- function(exposure, numerator = NULL, denominator, id, timevar, data
   
 }
 
-cumprod_death <- function(vec, ...) {
-  
-  if(length(vec) > 1) {
-    
-    tmp <- cumprod(vec)[-length(vec)]
-    return(c(1,tmp))
-    
-  } else
-    return(1)
-  
-  return(out)
-  
-}
-

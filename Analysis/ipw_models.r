@@ -419,7 +419,7 @@ for (i in 1:length(outvar_all)){
   
   pm_w <- ipwtm_ranger(exposure = "pm", denominator = fmla.denom.pm, 
                        numerator = formula('~pm.lag1+pm.lag2+pm.lag3+pm.lag4'), 
-                       id = "zip_ssn",timevar = "ssn_time", data = pmFit, trunc = NULL, 
+                       id = "zip",timevar = "ssn_time", data = pmFit, trunc = NULL, 
                        continuous = TRUE, num.trees = 200, max.depth = 8, num.threads = 16)
   
   cpFit <- merge(cpFit, data.frame(pmFit[,c("zip","ssn_time")], ipw_pm = pm_w$ipw.weights),

@@ -18,5 +18,13 @@ This repository contains the code used to fit history adjusted marginal structur
 
 [`Analysis/output_cox.R`](https://github.com/kevjosey/pm-steroid/blob/main/Analysis/survival_models.R) Creates tables and figures from the fitted proportional hazard model.
 
+### Tutorial
+
+[`Tutorial/toy_example.R`](https://github.com/kevjosey/pm-steroid/blob/main/Tutorial/toy_examle.R) Example code for evaluating the RERI on simulated_data.csv. 
+
+[`Tutorial/interaction_cvd.R`](https://github.com/kevjosey/pm-steroid/blob/main/Tutorial/interaction_cvd.R) Code for running interaction with CVD as the second exposure with PM.
+
+[`Tutorial/interaction_cvd.R`](https://github.com/kevjosey/pm-steroid/blob/main/Tutorial/simulated_data.csv) Simulated dataset for toy example
+
 ### Data
 For data privacy reasons, the Medicare data used in this study cannot be made publicly available, but interested parties can request access by applying through the US Centers for Medicare and Medicaid Services. The PM2.5 exposure data are publicly available at the following link: https://doi.org/10.7927/0rvr-4538. Area-level covariates used herein are also publicly available from the US Census Bureau website.

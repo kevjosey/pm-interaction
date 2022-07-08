@@ -8,7 +8,7 @@ library(ggplot2)
 library(ranger)
 
 source("~/Github/pm-steroid/Functions/ipw_fun.R")
-source("~/Github/pm-steroid/Tutorial/interaction.R")
+source("~/Github/pm-steroid/Tutorial/interaction_cvd.R")
 dat <- read_csv("~/Github/pm-steroid/Tutorial/simulated_data.csv")
 dat <- data.frame(dat)
 

@@ -300,7 +300,7 @@ for (i in 1:length(outvar_all)){
   setDT(cpFit_drug); setDT(cpFit_meds); setDT(cpFit_nomeds)
 
   # shift time0 around and update time1
-  cpFit_drug$time0 <- with(cpFit_drug, time0 + shift, time0)
+  cpFit_drug$time0 <- time0 + shift
   cpFit_drug$event <- "changeDrug"
   cpFit_drug$date <- ymd(cpFit_drug$date + cpFit_drug$shift)
   cpFit_meds <- setDT(rbind(cpFit_drug, cpFit_meds))

@@ -45,7 +45,7 @@ add_interact_cox <- function(model, pm0, pm1, conf.level = 0.95) {
   V <- model$var2
   
   W.tmp <- model.matrix(delete.response(model$terms), X)[,-1]
-  W <- W.tmp - matrix(rep(model$means, each = nrow(W.tmp)), nrow = nrow(W.tmp))
+  W <- W.tmp #- matrix(rep(model$means, each = nrow(W.tmp)), nrow = nrow(W.tmp))
   
   col1 <- length(model$coefficients)
   col0 <- (col1 - 1)/2 + 1

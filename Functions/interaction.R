@@ -14,11 +14,11 @@ pm_contrast <- function(model, pm0, pm1) {
   
   h2 <- c(lp[2] - lp[1])
   h3 <- c(lp[3] - lp[1])
-  h4 <- c(lp[4] - lp[1])
+  h4 <- c(lp[4] - lp[2])
   
   w2 <- c(W[2,] - W[1,])
   w3 <- c(W[3,] - W[1,])
-  w4 <- c(W[4,] - W[1,])
+  w4 <- c(W[4,] - W[2,])
   
   est <- c(h2, h3, h4)
   estvar <- diag(rbind(w2,w3,w4) %*% V %*% cbind(w2,w3,w4))

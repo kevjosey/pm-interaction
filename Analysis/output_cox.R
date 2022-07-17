@@ -26,19 +26,18 @@ for (i in 1:length(outvar)){
   hr_tmp2 <- pm_contrast(model_ns, pm0 = 8, pm1 = 12)
   
   hr_out <- data.frame(rbind(hr_tmp1, hr_tmp2))
+  hr_out$descript <- rep(c("-", "Off Corticteroids", "On Corticosteroids"), 2)
   hr_out$outcome <- outvar[i]
   hr_out$contrast <- paste0(hr_out$pm1, " vs. ", hr_out$pm0)
   hr <- rbind(hr, hr_out)
   
   # reri model
-  reri_tmp1 <- data.frame(t(sapply(seq(10, 15, by = 0.1), function(z, ...) 
-    add_interact_cox(model_ns, pm0 = 10, pm1 = z))))
-  reri_tmp2 <- data.frame(t(sapply(seq(8, 15, by = 0.1), function(z, ...)
+  reri_tmp1 <- data.frame(t(sapply(seq(8, 15, by = 0.1), function(z, ...)
     add_interact_cox(model_ns, pm0 = 8, pm1 = z))))
-  reri_tmp3 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
+  reri_tmp2 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
     add_interact_cox(model_ns, pm0 = 5, pm1 = z))))
   
-  reri_out <- data.frame(rbind(reri_tmp1, reri_tmp2, reri_tmp3))
+  reri_out <- data.frame(rbind(reri_tmp1, reri_tmp2))
   
   reri_out$outcome <- outvar[i]
   reri_out$contrast <- paste0(reri_out$pm1, " vs. ", reri_out$pm0)
@@ -51,13 +50,14 @@ for (i in 1:length(outvar)){
 
 reri[,1:3] <- reri[,1:3]*100 # scale to percentile
 
-write.csv(reri, "M:/External Users/KevinJos/output/age_time/out_msm/reri_cox.csv")
-write.csv(coef, "M:/External Users/KevinJos/output/age_time/out_msm/coef_cox.csv")
-write.csv(hr, "M:/External Users/KevinJos/output/age_time/out_msm/hr_cox.csv")
+write.csv(reri, "M:/External Users/KevinJos/output/age_time/main/reri_cox.csv")
+write.csv(coef, "M:/External Users/KevinJos/output/age_time/main/coef_cox.csv")
+write.csv(hr, "M:/External Users/KevinJos/output/age_time/main/hr_cox.csv")
 
 ## Plots
 
-reri <- read.csv("M:/External Users/KevinJos/output/age_time/out_msm/reri_cox.csv")
+reri <- read.csv("M:/External Users/KevinJos/output/age_time/main/reri_cox.csv")
+reri <- read.csv("M:/External Users/KevinJos/output/age_time/main/hr_cox.csv")
 
 nice_names_1<-c('Myocardial Infarction or\nAcute Coronary Syndrome',
                 'Ischemic Stroke or\nTransient Ischemic Attack',
@@ -76,13 +76,15 @@ nice_names_2<-c('Myocardial Infarction or ACS',
 cross <- cbind(nice_names = nice_names_1, 
                outcome = c("mi_acs", "iscstroke_tia", "newhf", "newvte", "fib", "death"))
 
-reri_sub <- subset(reri, pm0 == 5 & pm1 == 10 | pm0 == 8 & pm1 == 12)
-reri_sub$contrast <- factor(reri_sub$contrast, levels = c("10 vs. 5", "12 vs. 8"))
-reri_plot <- merge(reri_sub, cross, by = "outcome")
+hr_sub <- subset(hr, p(m0 == 5 & pm1 == 10 | pm0 == 8 & pm1 == 12) & descript != "-")
+hr_sub$descript <- factor(hr_sub$descript, levels = c("Off Corticosteroids", "On Corticosteroids"))
+hr_sub$contrast <- factor(hr_sub$contrast, levels = c("10 vs. 5", "12 vs. 8"))
+hr_plot <- merge(hr_sub, cross, by = "outcome")
 
-f <- ggplot(reri_plot, aes(x = nice_names, y = est, colour = contrast)) +
+f <- ggplot(hr_plot, aes(x = nice_names, y = est, colour = contrast, shape = descript)) +
   geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.25))+
-  labs(title = "Estimates of the Relative Excess Risk due to Interaction", x = "Outcome", y = "Risk Increase (%)", colour = "PM2.5 Contrast")+
+  labs(title = "Hazard Ratio Estimates from Increasing PM2.5", x = "Outcome", 
+       y = "Hazard Ratio", colour = "PM2.5 Contrast", shape = "Medication Status") +
   geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
@@ -96,7 +98,7 @@ for (i in 1:length(outvar)) {
   g <- ggplot(subset(reri, outcome == outvar[i]), aes(x = pm1, y = est, colour = pm0)) +
     geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, linetype = "dotted")+
     geom_line(size = 1) +
-    labs(title = nice_names_2[i], x = "PM2.5", y = "Risk Increase due to Interaction (%)", colour = "Reference PM2.5")+
+    labs(title = nice_names_2[i], x = "PM2.5", y = "Relative Excess Risk Increase due to Interaction (%)", colour = "Reference PM2.5")+
     geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
     theme_bw() +
     theme(plot.title = element_text(hjust = 0.5))
@@ -143,17 +145,17 @@ for (i in 1:length(outvar)) {
 
 }
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/reri_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/hr_plot.pdf", width = 12, height = 8, onefile = FALSE)
 f
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/reri_pm_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/reri_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_1[[1]], plotlist_1[[2]], plotlist_1[[3]],
           plotlist_1[[4]], plotlist_1[[5]], plotlist_1[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/cox_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/cox_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_2[[1]], plotlist_2[[2]], plotlist_2[[3]],
           plotlist_2[[4]], plotlist_2[[5]], plotlist_2[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")

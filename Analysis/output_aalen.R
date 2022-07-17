@@ -92,17 +92,17 @@ for (i in 1:length(outvar)){
   
 }
 
-write.csv(aeri1, "M:/External Users/KevinJos/output/age_time/out_msm/aeri_age.csv")
-write.csv(aeri2, "M:/External Users/KevinJos/output/age_time/out_msm/aeri_pm.csv")
-write.csv(aeri3, "M:/External Users/KevinJos/output/age_time/out_msm/aeri_curve.csv")
-write.csv(aeri4, "M:/External Users/KevinJos/output/age_time/out_msm/aeri_monotone.csv")
+write.csv(aeri1, "M:/External Users/KevinJos/output/age_time/main/aeri_age.csv")
+write.csv(aeri2, "M:/External Users/KevinJos/output/age_time/main/aeri_pm.csv")
+write.csv(aeri3, "M:/External Users/KevinJos/output/age_time/main/aeri_curve.csv")
+write.csv(aeri4, "M:/External Users/KevinJos/output/age_time/main/aeri_monotone.csv")
 
 ## Plots
 
-aeri1 <- read.csv("M:/External Users/KevinJos/output/age_time/out_msm/aeri_age.csv")
-aeri2 <- read.csv("M:/External Users/KevinJos/output/age_time/out_msm/aeri_pm.csv")
-aeri3 <- read.csv("M:/External Users/KevinJos/output/age_time/out_msm/aeri_curve.csv")
-aeri4 <- read.csv("M:/External Users/KevinJos/output/age_time/out_msm/aeri_monotone.csv")
+aeri1 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_age.csv")
+aeri2 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_pm.csv")
+aeri3 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_curve.csv")
+aeri4 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_monotone.csv")
 
 nice_names_1<-c('Myocardial Infarction or\nAcute Coronary Syndrome',
                 'Ischemic Stroke or\nTransient Ischemic Attack',
@@ -219,31 +219,31 @@ for (i in 1:length(outvar)) {
   
 }
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/aeri_time_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/aeri_time_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_1[[1]], plotlist_1[[2]], plotlist_1[[3]],
           plotlist_1[[4]], plotlist_1[[5]], plotlist_1[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/aeri_pm_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/aeri_pm_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_2[[1]], plotlist_2[[2]], plotlist_2[[3]],
           plotlist_2[[4]], plotlist_2[[5]], plotlist_2[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/aeri_bigtime_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/aeri_bigtime_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_3[[1]], plotlist_3[[2]], plotlist_3[[3]],
           plotlist_3[[4]], plotlist_3[[5]], plotlist_3[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/aeri_monotone_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/aeri_monotone_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_4[[1]], plotlist_4[[2]], plotlist_4[[3]],
           plotlist_4[[4]], plotlist_4[[5]], plotlist_4[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/out_msm/aalen_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/main/aalen_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_5[[1]], plotlist_5[[2]], plotlist_5[[3]],
           plotlist_5[[4]], plotlist_5[[5]], plotlist_5[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")

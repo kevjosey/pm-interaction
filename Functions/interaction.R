@@ -1,7 +1,7 @@
 # pm1.5 contrast
 pm_contrast <- function(model, pm0, pm1) {
   
-  V <- model$var2
+  V <- sandwich(model)
   
   X <- data.frame(onMeds = c(0,1,0,1), pm = c(pm0, pm0, pm1, pm1))
   X$pm_nomed <- ifelse(X$onMeds == 0, X$pm, 8)
@@ -42,7 +42,7 @@ add_interact_cox <- function(model, pm0, pm1, conf.level = 0.95) {
   X$pm_med <- ifelse(X$onMeds == 1, X$pm, 8)
   
   lp <- predict(model, newdata = X, se = FALSE, type = "lp")
-  V <- model$var2
+  V <- sandwich(model)
   
   W.tmp <- model.matrix(delete.response(model$terms), X)[,-1]
   W <- W.tmp - matrix(rep(model$means, each = nrow(W.tmp)), nrow = nrow(W.tmp))

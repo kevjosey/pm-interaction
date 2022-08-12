@@ -356,8 +356,10 @@ for (i in 1:length(outvar_all)){
                  ][,zip:=ifelse(event != "changeZip" & !is.na(shift(zip, n = 1, type = "lag")),
                                 shift(zip, n = 1, type = "lag"), zip), by = bene_id
                    ][order(bene_id, time0, time1)
-                     ][,drug_time:=ifelse(event == "changeZip" & !is.na(shift(drug_time, n = 1, type = "lag")),
-                                         shift(drug_time, n = 1, type = "lag"), drug_time), by = bene_id]
+                     ][,drug_time:=ifelse2(event == "changeZip" & shift(event, n = 1, type = "lead") == "changePM",
+                                         shift(drug_time, n = 1, type = "lead"), drug_time), by = bene_id,
+                       ][,drug_time:=ifelse2(event == "changeZip" & shift(event, n = 1, type = "lead") %in% c("changeDrug", "startMed"),
+                                          shift(drug_time, n = 1, type = "lead") - 1, drug_time), by = bene_id]
   
   # read in and clean the zipcode level confounders
   conf <- fread("M:/External Users/RachelNet/data/confounders/census_interpolated_zips.csv")
@@ -373,7 +375,7 @@ for (i in 1:length(outvar_all)){
   # merge confounders with health data by zipcode and year (either index year or year of zipcode change)
   cpFit <- merge(cpFit, conf, by=c('zip','yr_ssn'))
   
-  ## MERGE THE CONSTANT CHARACTERISTICS BACK IN
+  ## MERGE THE INDIVIDUAL COVARIATES BACK IN
   
   vnames <- unique(c("bene_id","age","sex","race","dualeligible",
                      names(subcohort)[grep('dx_',names(subcohort))],
@@ -401,7 +403,7 @@ for (i in 1:length(outvar_all)){
                                                                      paste0(select_hx,collapse = '+'))))),]
 
   # inspect/check that code works
-  # tempdat <- with(cpFit, data.table(bene_id, indexdate, enddate, zip, ssn_time, onMeds, 
+  # tempdat <- with(cpFit, data.table(bene_id, indexdate, enddate, zip, ssn_time, drug_time, onMeds, 
   #                                   pm, event, failed, died, time0, time1, shift, last))[order(bene_id, time0, time1)]
 
   # IPW Analysis ------------------------------------------------------------

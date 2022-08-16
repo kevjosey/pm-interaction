@@ -46,7 +46,8 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
     } else {
       
       mod1 <- ranger(update.formula(numerator, formula(paste0("factor(",exposure,") ~ ."))), probability = TRUE,
-                     data = data, num.trees = num.trees, max.depth = max.depth, num.threads = num.threads)
+                     data = data, num.trees = num.trees, max.depth = max.depth, num.threads = num.threads,
+                     respect.unordered.factors = "partition")
       mod1.pred <- mod1$predictions[,2]
       tempdat$p.numerator <- 1 - c(mod1.pred)
       
@@ -56,7 +57,8 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
     }
     
     mod2 <- ranger(update.formula(denominator, formula(paste0("factor(",exposure,") ~ ."))), probability = TRUE,
-                   data = data, num.trees = num.trees, max.depth = max.depth, num.threads = num.threads)
+                   data = data, num.trees = num.trees, max.depth = max.depth, num.threads = num.threads,
+                   respect.unordered.factors = "partition")
     mod2.pred <- mod2$predictions[,2]
     tempdat$p.denominator <- 1 - c(mod2.pred)
     
@@ -77,7 +79,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
       
       mod1 <- ranger(update.formula(numerator, formula(paste0(exposure," ~ ."))),
                      data = data, num.trees = num.trees, max.depth = max.depth, 
-                     num.threads = num.threads)
+                     num.threads = num.threads, respect.unordered.factors = "partition")
       mod1.pred <- mod1$predictions
       mod1.sd <- sd(tempdat$exposure - mod1$predictions)
       tempdat$p.numerator <- dnorm(tempdat$exposure, mod1.pred, mod1.sd)
@@ -86,7 +88,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
     
     mod2 <- ranger(update.formula(denominator, formula(paste0(exposure," ~ ."))),
                    data = data, num.trees = num.trees, max.depth = max.depth, 
-                   num.threads = num.threads)
+                   num.threads = num.threads,respect.unordered.factors = "partition")
     mod2.pred <- mod2$predictions
     mod2.sd <- sd(tempdat$exposure - mod2$predictions)
     tempdat$p.denominator <- dnorm(tempdat$exposure, mod2.pred, mod2.sd)

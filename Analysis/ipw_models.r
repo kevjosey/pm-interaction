@@ -402,6 +402,9 @@ for (i in 1:length(outvar_all)){
                                                                      paste0(select_dx,collapse = '+'), ' + ',
                                                                      paste0(select_hx,collapse = '+'))))),]
 
+  rm.id <- unique(cpFit[which((cpFit$time1 - cpFit$time0) > 137),]$bene_id)
+  cpFit <- cpFit[!(cpFit$bene_id %in% rm.id),]
+                        
   # inspect/check that code works
   # tempdat <- with(cpFit, data.table(bene_id, indexdate, enddate, zip, ssn_time, drug_time, onMeds, 
   #                                   pm, event, failed, died, time0, time1, shift, last))[order(bene_id, time0, time1)]
@@ -422,7 +425,8 @@ for (i in 1:length(outvar_all)){
   pm_w <- ipwtm_ranger(exposure = "pm", denominator = fmla.denom.pm, 
                        numerator = formula('~pm.lag1+pm.lag2+pm.lag3+pm.lag4'), 
                        id = "zip",timevar = "ssn_time", data = pmFit, trunc = NULL, 
-                       continuous = TRUE, num.trees = 200, max.depth = 8, num.threads = 16)
+                       continuous = TRUE, num.trees = 200, max.depth = 8, num.threads = 16,
+                       respect.unordered.factors = "partition")
   
   cpFit <- merge(cpFit, data.frame(pmFit[,c("zip","ssn_time")], ipw_pm = pm_w$ipw.weights),
                  by = c("zip","ssn_time"), all.x = TRUE)
@@ -450,7 +454,8 @@ for (i in 1:length(outvar_all)){
   med_w <- ipwtm_ranger(exposure = "onMeds", denominator = fmla.denom.med, 
                         numerator = formula("~ pm"),
                         id = "bene_id",timevar = "drug_time", data = medFit, trunc = NULL, 
-                        continuous = FALSE, num.trees = 200, max.depth = 8, num.threads = 12)
+                        continuous = FALSE, num.trees = 200, max.depth = 8, num.threads = 12,
+                        respect.unordered.factors = "partition")
 
   cpFit <- merge(cpFit, data.frame(medFit[,c("bene_id","drug_time")], ipw_med = med_w$ipw.weights),
                  by = c("bene_id","drug_time"), all.x = TRUE)
@@ -477,7 +482,8 @@ for (i in 1:length(outvar_all)){
     death_w <- ipwtm_ranger(exposure = "died", denominator = fmla.denom.death, 
                             numerator = formula("~ onMeds+pm"),
                             id = "bene_id", timevar = "drug_time", data = deathFit, trunc = NULL,
-                            continuous = FALSE, death = TRUE, num.trees = 200, max.depth = 8, num.threads = 12)
+                            continuous = FALSE, death = TRUE, num.trees = 200, max.depth = 8, num.threads = 12,
+                            respect.unordered.factors = "partition")
 
     cpFit <- merge(cpFit, data.frame(deathFit[,c("bene_id","drug_time")], ipw_death = death_w$ipw.weights),
                    by = c("bene_id","drug_time"), all.x = TRUE)

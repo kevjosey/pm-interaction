@@ -88,7 +88,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
     
     mod2 <- ranger(update.formula(denominator, formula(paste0(exposure," ~ ."))),
                    data = data, num.trees = num.trees, max.depth = max.depth, 
-                   num.threads = num.threads,respect.unordered.factors = "partition")
+                   num.threads = num.threads, respect.unordered.factors = "partition")
     mod2.pred <- mod2$predictions
     mod2.sd <- sd(tempdat$exposure - mod2$predictions)
     tempdat$p.denominator <- dnorm(tempdat$exposure, mod2.pred, mod2.sd)

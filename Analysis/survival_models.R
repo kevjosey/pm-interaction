@@ -17,32 +17,19 @@ for (i in 1:length(fnames)) {
   ## msm code
   dat$bene_id_drug <- paste(dat$bene_id, dat$drug_time)
 
-  if(is.null(dat$ipw_death)) {
-
-    medFit <- dat[!duplicated(bene_id_drug)]
-    medFit <- medFit[order(medFit$bene_id, medFit$time0)]
-    medFit$ipw_temp <- unsplit(lapply(split(with(medFit, ipw_med), medFit$bene_id), cumprod), medFit$bene_id)
-
-    dat <- merge(dat, data.frame(medFit[,c("bene_id","drug_time","ipw_temp")]),
-                 by = c("bene_id","drug_time"), all.x = TRUE)
-
-  } else {
-
-    medFit <- dat[!duplicated(bene_id_drug)]
-    medFit <- medFit[order(medFit$bene_id, medFit$time0)]
-    medFit$ipw_temp <- unsplit(lapply(split(with(medFit, ipw_med*ipw_death), medFit$bene_id), cumprod), medFit$bene_id)
-
-    dat <- merge(dat, data.frame(medFit[,c("bene_id","drug_time","ipw_temp")]),
-                 by = c("bene_id","drug_time"), all.x = TRUE)
-
-  }
-
+  medFit <- dat[!duplicated(bene_id_drug)]
+  medFit <- medFit[order(medFit$bene_id, medFit$time0)]
+  medFit$ipw_temp <- unsplit(lapply(split(with(medFit, ipw_med*ipw_censor), medFit$bene_id), cumprod), medFit$bene_id)
+  
+  dat <- merge(dat, data.frame(medFit[,c("bene_id","drug_time","ipw_temp")]),
+               by = c("bene_id","drug_time"), all.x = TRUE)
+  
   dat$ipw <- dat$ipw_temp*dat$ipw_pm
   
   ## truncate
   dat$weights.trunc <- dat$ipw
-  dat$weights.trunc[dat$ipw < quantile(dat$ipw, 0.025)] <- quantile(dat$ipw, 0.025)
-  dat$weights.trunc[dat$ipw > quantile(dat$ipw, 0.975)] <- quantile(dat$ipw, 0.975)
+  dat$weights.trunc[dat$ipw < quantile(dat$ipw, 0.01)] <- quantile(dat$ipw, 0.01)
+  dat$weights.trunc[dat$ipw > quantile(dat$ipw, 0.99)] <- quantile(dat$ipw, 0.99)
   
   ## medication time scale
   # dat$time0 <- with(dat,(time0 - age)*365.25)
@@ -67,7 +54,7 @@ for (i in 1:length(fnames)) {
   ## additive hazard model
   dat <- setDF(dat[order(dat$bene_id, dat$time0),])
   aalen_model <- aalen(formula = Surv(time0, time1, failed) ~ onMeds + pm + onMeds:pm,
-                       data = dat, start.time = 66, max.time = 95, clusters = dat$bene_id, id = dat$bene_id, 
+                       data = dat, start.time = 65, max.time = 95, clusters = dat$bene_id, id = dat$bene_id, 
                        weights = dat$weights.trunc, robust = 1, covariance = 1, n.sim = 1000)
   
   ## save models
@@ -87,32 +74,19 @@ for (i in 1:length(fnames)) {
   ## msm code
   dat$bene_id_drug <- paste(dat$bene_id, dat$drug_time)
 
-  if(is.null(dat$ipw_death)) {
-
-    medFit <- dat[!duplicated(bene_id_drug)]
-    medFit <- medFit[order(medFit$bene_id, medFit$time0)]
-    medFit$ipw_temp <- unsplit(lapply(split(with(medFit, ipw_med), medFit$bene_id), cumprod), medFit$bene_id)
-
-    dat <- merge(dat, data.frame(medFit[,c("bene_id","drug_time","ipw_temp")]),
-                 by = c("bene_id","drug_time"), all.x = TRUE)
-
-  } else {
-
-    medFit <- dat[!duplicated(bene_id_drug)]
-    medFit <- medFit[order(medFit$bene_id, medFit$time0)]
-    medFit$ipw_temp <- unsplit(lapply(split(with(medFit, ipw_med*ipw_death), medFit$bene_id), cumprod), medFit$bene_id)
-
-    dat <- merge(dat, data.frame(medFit[,c("bene_id","drug_time","ipw_temp")]),
-                 by = c("bene_id","drug_time"), all.x = TRUE)
-
-  }
+  medFit <- dat[!duplicated(bene_id_drug)]
+  medFit <- medFit[order(medFit$bene_id, medFit$time0)]
+  medFit$ipw_temp <- unsplit(lapply(split(with(medFit, ipw_med*ipw_censor), medFit$bene_id), cumprod), medFit$bene_id)
+  
+  dat <- merge(dat, data.frame(medFit[,c("bene_id","drug_time","ipw_temp")]),
+               by = c("bene_id","drug_time"), all.x = TRUE)
 
   dat$ipw <- dat$ipw_temp*dat$ipw_pm
   
   ## truncate
   dat$weights.trunc <- dat$ipw
-  dat$weights.trunc[dat$ipw < quantile(dat$ipw, 0.025)] <- quantile(dat$ipw, 0.025)
-  dat$weights.trunc[dat$ipw > quantile(dat$ipw, 0.975)] <- quantile(dat$ipw, 0.975)
+  dat$weights.trunc[dat$ipw < quantile(dat$ipw, 0.01)] <- quantile(dat$ipw, 0.01)
+  dat$weights.trunc[dat$ipw > quantile(dat$ipw, 0.99)] <- quantile(dat$ipw, 0.99)
   
   ## medication time scale
   # dat$time0 <- with(dat,(time0 - age)*365.25)
@@ -142,7 +116,7 @@ for (i in 1:length(fnames)) {
   print(warnings())
   
   ## save models
-  save(model_ns, file=paste0("M:/External Users/KevinJos/output/age_time/cox_hamsm/",fnames[i]))
+  save(model_ns, file=paste0("M:/External Users/KevinJos/output/age_time/cox_msm/",fnames[i]))
   
   rm(model_ns, dat)
   gc()

@@ -404,6 +404,10 @@ for (i in 1:length(outvar_all)){
 
   rm.id <- unique(cpFit[which((cpFit$time1 - cpFit$time0) > 137),]$bene_id)
   cpFit <- cpFit[!(cpFit$bene_id %in% rm.id),]
+  
+  # censoring variable
+  cpFit$censor <- as.numeric((cpFit$indexdate + cpFit$time1) == cpFit$enddate &
+                               cpFit$failed != 1 & cpFit$enddate != ymd("2016-11-30"))
                         
   # inspect/check that code works
   # tempdat <- with(cpFit, data.table(bene_id, indexdate, enddate, zip, ssn_time, drug_time, onMeds, 
@@ -462,46 +466,34 @@ for (i in 1:length(outvar_all)){
 
   rm(med_w, fmla.denom.med, medFit); gc()
 
-  ## DEATH IPW WEIGHTS
+  ## CENSORING IPW WEIGHTS
 
-  if (outvar != "death") {
+  setDT(cpFit)
+  censorFit <- cpFit[cpFit[,.I[censor == max(censor)], by = bene_id_drug]$V1]
+  censorFit <- censorFit[!duplicated(bene_id_drug)]
+  setDF(censorFit); gc()
 
-    setDT(cpFit)
-    deathFit <- cpFit[cpFit[,.I[died == max(died)], by = bene_id_drug]$V1]
-    deathFit <- deathFit[!duplicated(bene_id_drug)]
-    setDF(deathFit); gc()
+  fmla.denom.censor <- formula(paste0('~pm+onMeds+age_tm+sex+race+dualeligible+season+yr_ssn+poverty+
+                                      popdensity+medianhousevalue+pct_owner_occ+education+
+                                      medhouseholdincome+pct_hisp+pct_blk+pct_white+',
+                                     paste0(select_hx, collapse = '+'), '+',
+                                     paste0(select_dx, collapse = '+')))
 
-    fmla.denom.death <- formula(paste0('~pm+onMeds+age_tm+sex+race+dualeligible+season+yr_ssn+poverty+
-                                        popdensity+medianhousevalue+pct_owner_occ+education+
-                                        medhouseholdincome+pct_hisp+pct_blk+pct_white+',
-                                       paste0(select_hx, collapse = '+'), '+',
-                                       paste0(select_dx, collapse = '+')))
+  censor_w <- ipwtm_ranger(exposure = "censor", denominator = fmla.denom.censor, 
+                          numerator = formula("~ onMeds+pm"),
+                          id = "bene_id", timevar = "drug_time", data = censorFit, trunc = NULL,
+                          continuous = FALSE, censor = TRUE, num.trees = 200, max.depth = 8, num.threads = 12)
 
-    death_w <- ipwtm_ranger(exposure = "died", denominator = fmla.denom.death, 
-                            numerator = formula("~ onMeds+pm"),
-                            id = "bene_id", timevar = "drug_time", data = deathFit, trunc = NULL,
-                            continuous = FALSE, death = TRUE, num.trees = 200, max.depth = 8, num.threads = 12)
+  cpFit <- merge(cpFit, data.frame(censorFit[,c("bene_id","drug_time")], ipw_censor = censor_w$ipw.weights),
+                 by = c("bene_id","drug_time"), all.x = TRUE)
 
-    cpFit <- merge(cpFit, data.frame(deathFit[,c("bene_id","drug_time")], ipw_death = death_w$ipw.weights),
-                   by = c("bene_id","drug_time"), all.x = TRUE)
+  cpFit$ipw_censor[is.na(cpFit$ipw_censor)] <- 1
 
-    cpFit$ipw_death[is.na(cpFit$ipw_death)] <- 1
+  dat <- setDT(subset(cpFit, select = c(bene_id, zip, ssn_time, drug_time, age,
+                                        onMeds, pm, event, failed, censor,
+                                        time0, time1, ipw_pm, ipw_med, ipw_censor)))
 
-    dat <- setDT(subset(cpFit, select = c(bene_id, zip, ssn_time, drug_time, age,
-                                          onMeds, pm, event, failed, died,
-                                          time0, time1, ipw_pm, ipw_med, ipw_death)))
-
-    rm(cpFit, deathFit, fmla.denom.death, death_w)
-
-  } else {
-
-    dat <- setDT(subset(cpFit, select = c(bene_id, zip, ssn_time, drug_time, age,
-                                          onMeds, pm, event, failed, died,
-                                          time0, time1, ipw_pm, ipw_med)))
-
-    rm(cpFit)
-
-  }
+  rm(cpFit, censorFit, fmla.denom.censor, censor_w)
 
   dat <- dat[order(bene_id,time0)]
   dat$time0 <- with(dat, time0/365.25 + age)

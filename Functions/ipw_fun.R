@@ -1,6 +1,6 @@
 
 ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, data, trunc = NULL,
-                         continuous = FALSE, death = FALSE, num.trees = 100, max.depth = 8, num.threads = 12, ...) {
+                         continuous = FALSE, censor = FALSE, num.trees = 100, max.depth = 8, num.threads = 12, ...) {
   
   tempcall <- match.call()
   
@@ -18,8 +18,8 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
     stop("No timevar specified")
   if (!("data" %in% names(tempcall))) 
     stop("No data specified")
-  if (continuous == TRUE & death == TRUE)
-    stop("How do you have a continuous death?")
+  if (continuous == TRUE & censor == TRUE)
+    stop("How do you have a continuous censor?")
   if (!is.null(tempcall$trunc)) {
     if (tempcall$trunc < 0 | tempcall$trunc > 0.5) 
       stop("Invalid truncation percentage specified (0-0.5)")
@@ -40,7 +40,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
       
       tempdat$p.numerator <- 1 - mean(tempdat$exposure, na.rm = TRUE)
       
-      if (!death)
+      if (!censor)
         tempdat$p.numerator[tempdat$exposure == 1] <- mean(tempdat$exposure, na.rm = TRUE)
       
     } else {
@@ -51,7 +51,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
       mod1.pred <- mod1$predictions[,2]
       tempdat$p.numerator <- 1 - c(mod1.pred)
       
-      if (!death)
+      if (!censor)
         tempdat$p.numerator[tempdat$exposure == 1] <- c(mod1.pred)[tempdat$exposure == 1]
       
     }
@@ -62,7 +62,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
     mod2.pred <- mod2$predictions[,2]
     tempdat$p.denominator <- 1 - c(mod2.pred)
     
-    if (!death)
+    if (!censor)
       tempdat$p.denominator[tempdat$exposure == 1] <- c(mod2.pred)[tempdat$exposure == 1]
     
     tempdat$ipw.weights <- with(tempdat, p.numerator/p.denominator)
@@ -81,7 +81,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
                      data = data, num.trees = num.trees, max.depth = max.depth, 
                      num.threads = num.threads, respect.unordered.factors = "partition")
       mod1.pred <- mod1$predictions
-      mod1.sd <- sd(tempdat$exposure - mod1$predictions)
+      mod1.sd <- sd(tempdat$exposure - mod1.pred)
       tempdat$p.numerator <- dnorm(tempdat$exposure, mod1.pred, mod1.sd)
       
     }
@@ -90,7 +90,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
                    data = data, num.trees = num.trees, max.depth = max.depth, 
                    num.threads = num.threads, respect.unordered.factors = "partition")
     mod2.pred <- mod2$predictions
-    mod2.sd <- sd(tempdat$exposure - mod2$predictions)
+    mod2.sd <- sd(tempdat$exposure - mod2.pred)
     tempdat$p.denominator <- dnorm(tempdat$exposure, mod2.pred, mod2.sd)
     
     tempdat$ipw.weights <- with(tempdat, p.numerator/p.denominator)

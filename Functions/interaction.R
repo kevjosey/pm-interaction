@@ -73,7 +73,7 @@ add_interact_cox <- function(model, pm0, pm1, conf.level = 0.95) {
 }
 
 # Aalen model additive interaction
-add_interact_aalen <- function(model, pm0, pm1, idx = NULL, conf.level = 0.95, monotone = TRUE, ...) {
+add_interact_aalen <- function(model, pm0, pm1, mu_pm, idx = NULL, conf.level = 0.95, monotone = TRUE, ...) {
   
   lvl <- 1 - ((1 - conf.level)/2)
   z <- qnorm(lvl, mean = 0, sd = 1)
@@ -81,10 +81,10 @@ add_interact_aalen <- function(model, pm0, pm1, idx = NULL, conf.level = 0.95, m
   if (class(model)[1] != "aalen") 
     stop("Error: model must be aalen object")
       
-    design <- rbind(c(1,0,pm0,0), 
-                    c(1,1,pm0,pm0),
-                    c(1,0,pm1,0), 
-                    c(1,1,pm1,pm1))
+    design <- rbind(c(1,0,pm0 - mu_pm,0), 
+                    c(1,1,pm0 - mu_pm,pm0 - mu_pm),
+                    c(1,0,pm1 - mu_pm,0), 
+                    c(1,1,pm1 - mu_pm,pm1 - mu_pm))
     
   if (monotone) {
     
@@ -99,8 +99,9 @@ add_interact_aalen <- function(model, pm0, pm1, idx = NULL, conf.level = 0.95, m
       
       h0 <- -c(reri.p)
       h1 <- c(exp(-lp[4]) - exp(-lp[2]))
-      h2 <- c(pm1*exp(-lp[4]) - pm1*exp(-lp[3]) - pm0*exp(-lp[2]) + pm0*exp(-lp[1]))
-      h3 <- c(pm1*exp(-lp[4]) - pm0*exp(-lp[2]))
+      h2 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm1 - mu_pm)*exp(-lp[3]) - 
+                (pm0 - mu_pm)*exp(-lp[2]) + (pm0 - mu_pm)*exp(-lp[1]))
+      h3 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm0 - mu_pm)*exp(-lp[2]))
       
       reri.var <- t(c(h0,h1,h2,h3)) %*% V %*% c(h0,h1,h2,h3) 
       reri.se <- sqrt(reri.var)
@@ -126,8 +127,8 @@ add_interact_aalen <- function(model, pm0, pm1, idx = NULL, conf.level = 0.95, m
       
       h0 <- -c(reri.p + 1)
       h1 <- c(exp(-lp[4]) - exp(-lp[2]))
-      h2 <- c(pm1*exp(-lp[4]) - pm1*exp(-lp[3]) - pm0*exp(-lp[2]) )
-      h3 <- c(pm1*exp(-lp[4]) - pm0*exp(-lp[2]))
+      h2 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm1 - mu_pm)*exp(-lp[3]) - (pm0 - mu_pm)*exp(-lp[2]))
+      h3 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm0 - mu_pm)*exp(-lp[2]))
       
       reri.var <- t(c(h0,h1,h2,h3)) %*% V %*% c(h0,h1,h2,h3) 
       reri.se <- sqrt(reri.var)

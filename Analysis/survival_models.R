@@ -51,14 +51,18 @@ for (i in 1:length(fnames)) {
   # 
   # rm(dat_tmp0, dat_tmp1, dat_meds);gc()
   
+  dat$mu_pm <- mean(do.call(c, lapply(split(dat$pm, paste(dat$zip, dat$ssn_time)), function(x) x[1])))
+  dat$pm_center <- dat$pm - dat$mu_pm
+  
   ## additive hazard model
   dat <- setDF(dat[order(dat$bene_id, dat$time0),])
-  aalen_model <- aalen(formula = Surv(time0, time1, failed) ~ onMeds + pm + onMeds:pm,
+  aalen_model <- aalen(formula = Surv(time0, time1, failed) ~ onMeds + pm_center + onMeds:pm_center,
                        data = dat, start.time = 65, max.time = 95, clusters = dat$bene_id, id = dat$bene_id, 
                        weights = dat$weights.trunc, robust = 1, covariance = 1, n.sim = 1000)
   
   ## save models
   save(aalen_model, file=paste0("M:/External Users/KevinJos/output/age_time/aalen_msm/",fnames[i]))
+  save(dat, file = filenames[i])
   
   rm(aalen_model, dat)
   gc()

@@ -19,6 +19,7 @@ for (i in 1:length(outvar)){
   load(paste0("M:/External Users/KevinJos/output/fit_data/oralsteroid_",outvar[i],'.RData'))
   
   dat <- setDT(dat)[order(bene_id, time0)]
+  mu_pm <- mean(dat$mu_pm)
 
   idx1 <- which.min(abs(aalen_model$cum[,1] - 70))  
   idx2 <- which.min(abs(aalen_model$cum[,1] - 80))
@@ -27,8 +28,8 @@ for (i in 1:length(outvar)){
   idx <- c(idx1, idx2, idx3)
   
   ## over time
-  aeri_tmp1 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx)))
-  aeri_tmp2 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, idx = idx)))
+  aeri_tmp1 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu_pm = mu_pm, idx = idx)))
+  aeri_tmp2 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, mu_pm = mu_pm, idx = idx)))
   
   colnames(aeri_tmp1) <- colnames(aeri_tmp2) <-
     c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -43,11 +44,11 @@ for (i in 1:length(outvar)){
   ## over pm
 
   aeri_tmp4 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...) 
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx1))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu_pm = mu_pm, idx = idx1))))
   aeri_tmp5 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx2))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu_pm = mu_pm, idx = idx2))))
   aeri_tmp6 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx3))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu_pm = mu_pm, idx = idx3))))
   
   aeri_out2 <- data.frame(rbind(aeri_tmp4, aeri_tmp5, aeri_tmp6))
   colnames(aeri_out2) <- c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -64,8 +65,8 @@ for (i in 1:length(outvar)){
   max.idx <- which.min(abs(aalen_model$cum[,1] - 95))
   idx_seq <- round(seq(1, max.idx, length.out = max(length(1:max.idx), 1000)))
   
-  aeri_tmp7 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx_seq)))
-  aeri_tmp8 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, idx = idx_seq)))
+  aeri_tmp7 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu_pm = mu_pm, idx = idx_seq)))
+  aeri_tmp8 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, mu_pm = mu_pm, idx = idx_seq)))
   
   colnames(aeri_tmp7) <- colnames(aeri_tmp8) <-
     c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -79,7 +80,7 @@ for (i in 1:length(outvar)){
   
   ## montonicity
   
-  aeri_tmp0 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx, monotone = FALSE)))
+  aeri_tmp0 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu_pm = mu_pm, idx = idx, monotone = FALSE)))
   
   colnames(aeri_tmp0) <- c("time", "pm0", "pm1", "est", "lower", "upper")
   aeri_out4 <- rbind(aeri_tmp1, aeri_tmp0)

@@ -405,10 +405,6 @@ for (i in 1:length(outvar_all)){
   rm.id <- unique(cpFit[which((cpFit$time1 - cpFit$time0) > 137),]$bene_id)
   cpFit <- cpFit[!(cpFit$bene_id %in% rm.id),]
   
-  # censoring variable
-  cpFit$censor <- as.numeric((cpFit$indexdate + cpFit$time1) == cpFit$enddate &
-                               cpFit$failed != 1 & cpFit$enddate != ymd("2016-11-30"))
-                        
   # inspect/check that code works
   # tempdat <- with(cpFit, data.table(bene_id, indexdate, enddate, zip, ssn_time, drug_time, onMeds, 
   #                                   pm, event, failed, died, time0, time1, shift, last))[order(bene_id, time0, time1)]
@@ -469,7 +465,7 @@ for (i in 1:length(outvar_all)){
   ## CENSORING IPW WEIGHTS
 
   setDT(cpFit)
-  censorFit <- cpFit[cpFit[,.I[censor == max(censor)], by = bene_id_drug]$V1]
+  censorFit <- cpFit[cpFit[,.I[died == max(died)], by = bene_id_drug]$V1]
   censorFit <- censorFit[!duplicated(bene_id_drug)]
   setDF(censorFit); gc()
 
@@ -479,7 +475,7 @@ for (i in 1:length(outvar_all)){
                                      paste0(select_hx, collapse = '+'), '+',
                                      paste0(select_dx, collapse = '+')))
 
-  censor_w <- ipwtm_ranger(exposure = "censor", denominator = fmla.denom.censor, 
+  censor_w <- ipwtm_ranger(exposure = "died", denominator = fmla.denom.censor, 
                           numerator = formula("~ onMeds+pm"),
                           id = "bene_id", timevar = "drug_time", data = censorFit, trunc = NULL,
                           continuous = FALSE, censor = TRUE, num.trees = 200, max.depth = 8, num.threads = 12)

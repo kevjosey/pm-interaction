@@ -463,27 +463,35 @@ for (i in 1:length(outvar_all)){
   rm(med_w, fmla.denom.med, medFit); gc()
 
   ## CENSORING IPW WEIGHTS
+  
+  if (outvar != "death") {
 
-  setDT(cpFit)
-  censorFit <- cpFit[cpFit[,.I[died == max(died)], by = bene_id_drug]$V1]
-  censorFit <- censorFit[!duplicated(bene_id_drug)]
-  setDF(censorFit); gc()
-
-  fmla.denom.censor <- formula(paste0('~pm+onMeds+age_tm+sex+race+dualeligible+season+yr_ssn+poverty+
-                                      popdensity+medianhousevalue+pct_owner_occ+education+
-                                      medhouseholdincome+pct_hisp+pct_blk+pct_white+',
-                                     paste0(select_hx, collapse = '+'), '+',
-                                     paste0(select_dx, collapse = '+')))
-
-  censor_w <- ipwtm_ranger(exposure = "died", denominator = fmla.denom.censor, 
-                          numerator = formula("~ onMeds+pm"),
-                          id = "bene_id", timevar = "drug_time", data = censorFit, trunc = NULL,
-                          continuous = FALSE, censor = TRUE, num.trees = 200, max.depth = 8, num.threads = 12)
-
-  cpFit <- merge(cpFit, data.frame(censorFit[,c("bene_id","drug_time")], ipw_censor = censor_w$ipw.weights),
-                 by = c("bene_id","drug_time"), all.x = TRUE)
-
-  cpFit$ipw_censor[is.na(cpFit$ipw_censor)] <- 1
+    setDT(cpFit)
+    censorFit <- cpFit[cpFit[,.I[died == max(died)], by = bene_id_drug]$V1]
+    censorFit <- censorFit[!duplicated(bene_id_drug)]
+    setDF(censorFit); gc()
+  
+    fmla.denom.censor <- formula(paste0('~pm+onMeds+age_tm+sex+race+dualeligible+season+yr_ssn+poverty+
+                                        popdensity+medianhousevalue+pct_owner_occ+education+
+                                        medhouseholdincome+pct_hisp+pct_blk+pct_white+',
+                                       paste0(select_hx, collapse = '+'), '+',
+                                       paste0(select_dx, collapse = '+')))
+  
+    censor_w <- ipwtm_ranger(exposure = "died", denominator = fmla.denom.censor, 
+                            numerator = formula("~ onMeds+pm"),
+                            id = "bene_id", timevar = "drug_time", data = censorFit, trunc = NULL,
+                            continuous = FALSE, censor = TRUE, num.trees = 200, max.depth = 8, num.threads = 12)
+  
+    cpFit <- merge(cpFit, data.frame(censorFit[,c("bene_id","drug_time")], ipw_censor = censor_w$ipw.weights),
+                   by = c("bene_id","drug_time"), all.x = TRUE)
+  
+    cpFit$ipw_censor[is.na(cpFit$ipw_censor)] <- 1
+    
+  } else {
+    
+    cpFit$ipw_censor <- 1
+    
+  }
 
   dat <- setDT(subset(cpFit, select = c(bene_id, zip, ssn_time, drug_time, age,
                                         onMeds, pm, event, failed, censor,

@@ -16,13 +16,13 @@ setDT(cohort)
 medclass <- "oralsteroid"
 
 cohort <- cohort[,enddate:=pmin(deathdate,dtend,ymd("2016-11-30"),
-                      get(paste0("last_date_", medclass)), na.rm=T)
-       ][,firstmed:=get(paste0('first_date_',medclass))
-        ][,lastmed:=get(paste0('last_date_',medclass))
-          # and remove people who start taking meds or experience a terminating event before their index date
-          ][indexdate<=pmin(firstmed,enddate,na.rm=T)
-            # if a person first takes meds after a terminating event, treat as though they never take meds
-            ][!is.na(firstmed) & firstmed>enddate,':='(firstmed=NA,lastmed=NA)]
+                                get(paste0("last_date_", medclass)), na.rm=T)
+                 ][,firstmed:=get(paste0('first_date_',medclass))
+                   ][,lastmed:=get(paste0('last_date_',medclass))
+                     # and remove people who start taking meds or experience a terminating event before their index date
+                     ][indexdate<=pmin(firstmed,enddate,na.rm=T)
+                       # if a person first takes meds after a terminating event, treat as though they never take meds
+                       ][!is.na(firstmed) & firstmed>enddate,':='(firstmed=NA,lastmed=NA)]
 
 ## remove sex=0 (there's only one person with this) ##
 cohort <- cohort[!(sex=='0')]
@@ -48,7 +48,7 @@ add_cont <- function(x, nm_var, nm_level, onMeds=NULL){
     sd_x<-round(sd(x, na.rm=T),ndig)
     return(c(nm_var, nm_level, n_x, mean_x, sd_x))
   }
-
+  
 }
 
 ## write a function to add a row for a level of a categorical variable
@@ -153,6 +153,7 @@ table2<-rbind(table2, add_cont(x=pm_sub[,pm25_fall],nm_var='PM2.5',nm_level='Fal
 ## use same approach to add the neighborhood level features ##
 ## read in and clean ##
 conf <- fread("M:/External Users/RachelNet/data/confounders/census_interpolated_zips.csv")
+
 ## subset to only 2008 and later (dates when medicare data available) ##
 conf<-conf[year>=2008
            ## make zipcode into a 5-digit character string ##
@@ -160,7 +161,6 @@ conf<-conf[year>=2008
              ## remove unnecessary columns
              ][,c('V1','zcta','ZIP'):=NULL]
 conf[,zip_in_study:=as.numeric(zip %in% all_zips)]
-
 conf_sub<-conf[zip_in_study==1]
 
 neigh<-c('popdensity','medianhousevalue','medhouseholdincome','poverty','pct_owner_occ','hispanic','pct_blk','pct_white','education')
@@ -186,8 +186,8 @@ write.csv(table2, "M:/External Users/KevinJos/output/table2.csv")
 ## outcomes ##
 outvar_all<-c('fib','newhf', 'newvte', 'mi_acs','iscstroke_tia','death')
 out_names<-c('Atrial Fibrilation','Heart Failure','Venous Thromboembolism',
-              'Myocardial Infarction with Acute Coronary Syndrome',
-              'Ischemic Stroke with Transient Ischemic Attack', 'All-Cause Mortality')
+             'Myocardial Infarction with Acute Coronary Syndrome',
+             'Ischemic Stroke with Transient Ischemic Attack', 'All-Cause Mortality')
 
 table3 <- data.frame()
 
@@ -226,11 +226,11 @@ for (i in 1:length(outvar_all)){
   }
   
   pt0 <- with(subcohort, pmin(deathdate, dtend, ymd("2016-11-30"),
-                           get(paste0("first_date_", medclass)),
-                           get(endtime), na.rm = T) - indexdate)
+                              get(paste0("first_date_", medclass)),
+                              get(endtime), na.rm = T) - indexdate)
   pt1 <- with(subcohort, pmin(deathdate, dtend, ymd("2016-11-30"),
-                           get(paste0("last_date_", medclass)),
-                           get(endtime),na.rm = T) - 
+                              get(paste0("last_date_", medclass)),
+                              get(endtime),na.rm = T) - 
                 get(paste0("first_date_", medclass)))
   
   pt0[is.na(pt0) | pt0 < 0] <- 0
@@ -240,11 +240,11 @@ for (i in 1:length(outvar_all)){
   pt1 <- as.vector(pt1)/365.25
   
   after <- as.numeric(subcohort[,get(endtime)] >= firstmed &
-    subcohort[,get(endtime)] <= enddate)
+                        subcohort[,get(endtime)] <= enddate)
   after[is.na(after)] <- 0
   
   before <- as.numeric((subcohort[,get(endtime)] < firstmed | is.na(firstmed)) &
-    subcohort[,get(endtime)] <= enddate)
+                         subcohort[,get(endtime)] <= enddate)
   before[is.na(before)] <- 0
   
   all <- before + after

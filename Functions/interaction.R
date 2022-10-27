@@ -1,14 +1,15 @@
 # pm1.5 contrast
-pm_contrast <- function(model, pm0, pm1) {
+pm_contrast <- function(model, pm0, pm1, conf.level = 0.95) {
+  
+  lvl <- 1 - ((1 - conf.level)/2)
+  z <- qnorm(lvl, mean = 0, sd = 1)
   
   X <- data.frame(onMeds = c(0,1,0,1), pm = c(pm0, pm0, pm1, pm1))
   X$pm_nomed <- ifelse(X$onMeds == 0, X$pm, 8)
   X$pm_med <- ifelse(X$onMeds == 1, X$pm, 8)
   
-  W.tmp <- model.matrix(delete.response(model$terms), X)[,-1]
-  W <- W.tmp - matrix(rep(model$means, each = nrow(W.tmp)), nrow = nrow(W.tmp))
-  
-  lp <- predict(model, newdata = X, se = FALSE, type = "lp")
+  W <- model.matrix(delete.response(model$terms)[1:3], X)[,-1]
+  lp <- c(W%*%model$coefficients)
   V <- model$var
   
   h2 <- c(lp[2] - lp[1])
@@ -21,8 +22,8 @@ pm_contrast <- function(model, pm0, pm1) {
   
   est <- c(h2, h3, h4)
   estvar <- diag(rbind(w2,w3,w4) %*% V %*% cbind(w2,w3,w4))
-  lower <- exp(est - 1.96*sqrt(estvar))
-  upper <- exp(est + 1.96*sqrt(estvar))
+  lower <- exp(est - z*sqrt(estvar))
+  upper <- exp(est + z*sqrt(estvar))
   
   cbind(log.hr = est, log.var = estvar, hr = exp(est),
         lower = lower, upper = upper,
@@ -40,10 +41,8 @@ add_interact_cox <- function(model, pm0, pm1, conf.level = 0.95) {
   X$pm_nomed <- ifelse(X$onMeds == 0, X$pm, 8)
   X$pm_med <- ifelse(X$onMeds == 1, X$pm, 8)
   
-  W.tmp <- model.matrix(delete.response(model$terms), X)[,-1]
-  W <- W.tmp - matrix(rep(model$means, each = nrow(W.tmp)), nrow = nrow(W.tmp))
-  
-  lp <- predict(model, newdata = X, se = FALSE, type = "lp")
+  W <- model.matrix(delete.response(model$terms)[1:3], X)[,-1]
+  lp <- c(W%*%model$coefficients)
   V <- model$var
   
   col1 <- length(model$coefficients)
@@ -73,19 +72,19 @@ add_interact_cox <- function(model, pm0, pm1, conf.level = 0.95) {
 }
 
 # Aalen model additive interaction
-add_interact_aalen <- function(model, pm0, pm1, mu_pm, idx = NULL, conf.level = 0.95, monotone = TRUE, ...) {
+add_interact_aalen <- function(model, pm0, pm1, idx = NULL, conf.level = 0.95, monotone = TRUE, ...) {
   
   lvl <- 1 - ((1 - conf.level)/2)
   z <- qnorm(lvl, mean = 0, sd = 1)
   
   if (class(model)[1] != "aalen") 
     stop("Error: model must be aalen object")
-      
-    design <- rbind(c(1,0,pm0 - mu_pm,0), 
-                    c(1,1,pm0 - mu_pm,pm0 - mu_pm),
-                    c(1,0,pm1 - mu_pm,0), 
-                    c(1,1,pm1 - mu_pm,pm1 - mu_pm))
-    
+  
+  design <- rbind(c(1,0,pm0,8), 
+                  c(1,1,8,pm0),
+                  c(1,0,pm1,8), 
+                  c(1,1,8,pm1))
+  
   if (monotone) {
     
     out <- sapply(1:length(idx), function(i, ...) {
@@ -99,9 +98,10 @@ add_interact_aalen <- function(model, pm0, pm1, mu_pm, idx = NULL, conf.level = 
       
       h0 <- -c(reri.p)
       h1 <- c(exp(-lp[4]) - exp(-lp[2]))
-      h2 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm1 - mu_pm)*exp(-lp[3]) - 
-                (pm0 - mu_pm)*exp(-lp[2]) + (pm0 - mu_pm)*exp(-lp[1]))
-      h3 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm0 - mu_pm)*exp(-lp[2]))
+      h2 <- c(8*exp(-lp[4]) - pm1*exp(-lp[3]) - 
+                8*exp(-lp[2]) + pm0*exp(-lp[1]))
+      h3 <- c(pm1*exp(-lp[4]) - 8*exp(-lp[3]) - 
+                pm0*exp(-lp[2]) + 8*exp(-lp[1]))
       
       reri.var <- t(c(h0,h1,h2,h3)) %*% V %*% c(h0,h1,h2,h3) 
       reri.se <- sqrt(reri.var)
@@ -127,8 +127,8 @@ add_interact_aalen <- function(model, pm0, pm1, mu_pm, idx = NULL, conf.level = 
       
       h0 <- -c(reri.p + 1)
       h1 <- c(exp(-lp[4]) - exp(-lp[2]))
-      h2 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm1 - mu_pm)*exp(-lp[3]) - (pm0 - mu_pm)*exp(-lp[2]))
-      h3 <- c((pm1 - mu_pm)*exp(-lp[4]) - (pm0 - mu_pm)*exp(-lp[2]))
+      h2 <- c(8*exp(-lp[4]) - pm1*exp(-lp[3]) - 8*exp(-lp[2]))
+      h3 <- c(pm1*exp(-lp[4]) - 8*exp(-lp[3]) - pm0*exp(-lp[2]))
       
       reri.var <- t(c(h0,h1,h2,h3)) %*% V %*% c(h0,h1,h2,h3) 
       reri.se <- sqrt(reri.var)

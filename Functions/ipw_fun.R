@@ -35,7 +35,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
                         exposure = data[, as.character(exposure)])
   
   if (!continuous){
-  
+    
     if (is.null(tempcall$numerator)) {
       
       tempdat$p.numerator <- 1 - mean(tempdat$exposure, na.rm = TRUE)
@@ -66,7 +66,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
       tempdat$p.denominator[tempdat$exposure == 1] <- c(mod2.pred)[tempdat$exposure == 1]
     
     tempdat$ipw.weights <- with(tempdat, p.numerator/p.denominator)
-
+    
     
   } else if (continuous) {
     
@@ -102,7 +102,7 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
   
   if (!(is.null(tempcall$trunc))) {
     tempdat$weights.trunc <- tempdat$ipw.weights
-    tempdat$weights.trunc[tempdat$ipw.weights <= quantile(tempdat$ipw.weights, 0 + trunc)] <- quantile(tempdat$ipw.weights, 0 + trunc)
+    tempdat$weights.trunc[tempdat$ipw.weights < quantile(tempdat$ipw.weights, 0 + trunc)] <- quantile(tempdat$ipw.weights, 0 + trunc)
     tempdat$weights.trunc[tempdat$ipw.weights > quantile(tempdat$ipw.weights, 1 - trunc)] <- quantile(tempdat$ipw.weights, 1 - trunc)
   }
   
@@ -191,7 +191,7 @@ ipwtm_gee <- function(exposure, numerator = NULL, denominator, id, timevar, data
   
   if (!(is.null(tempcall$trunc))) {
     tempdat$weights.trunc <- tempdat$ipw.weights
-    tempdat$weights.trunc[tempdat$ipw.weights <= quantile(tempdat$ipw.weights, 0 + trunc)] <- quantile(tempdat$ipw.weights, 0 + trunc)
+    tempdat$weights.trunc[tempdat$ipw.weights < quantile(tempdat$ipw.weights, 0 + trunc)] <- quantile(tempdat$ipw.weights, 0 + trunc)
     tempdat$weights.trunc[tempdat$ipw.weights > quantile(tempdat$ipw.weights, 1 - trunc)] <- quantile(tempdat$ipw.weights, 1 - trunc)
   }
   
@@ -216,6 +216,20 @@ ipwtm_gee <- function(exposure, numerator = NULL, denominator, id, timevar, data
                   call = tempcall, num.mod = mod1, den.mod = mod2))
     
   }
+  
+}
+
+cumprod_censor <- function(vec, ...) {
+  
+  if(length(vec) > 1) {
+    
+    tmp <- cumprod(vec)[-length(vec)]
+    return(c(1,tmp))
+    
+  } else
+    return(1)
+  
+  return(out)
   
 }
 

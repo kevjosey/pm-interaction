@@ -1,5 +1,6 @@
 library(survival)
 library(data.table)
+library(haven)
 library(ggplot2)
 library(ggpubr)
 library(splines)
@@ -19,8 +20,7 @@ for (i in 1:length(outvar)){
   load(paste0("M:/External Users/KevinJos/output/fit_data/oralsteroid_",outvar[i],'.RData'))
   
   dat <- setDT(dat)[order(bene_id, time0)]
-  mu_pm <- mean(dat$mu_pm)
-
+  
   idx1 <- which.min(abs(aalen_model$cum[,1] - 70))  
   idx2 <- which.min(abs(aalen_model$cum[,1] - 80))
   idx3 <- which.min(abs(aalen_model$cum[,1] - 90))
@@ -28,8 +28,8 @@ for (i in 1:length(outvar)){
   idx <- c(idx1, idx2, idx3)
   
   ## over time
-  aeri_tmp1 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu_pm = mu_pm, idx = idx)))
-  aeri_tmp2 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, mu_pm = mu_pm, idx = idx)))
+  aeri_tmp1 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx)))
+  aeri_tmp2 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, idx = idx)))
   
   colnames(aeri_tmp1) <- colnames(aeri_tmp2) <-
     c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -42,13 +42,12 @@ for (i in 1:length(outvar)){
   aeri1 <- rbind(aeri1, aeri_out1)
   
   ## over pm
-
   aeri_tmp4 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...) 
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu_pm = mu_pm, idx = idx1))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx1))))
   aeri_tmp5 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu_pm = mu_pm, idx = idx2))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx2))))
   aeri_tmp6 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu_pm = mu_pm, idx = idx3))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx3))))
   
   aeri_out2 <- data.frame(rbind(aeri_tmp4, aeri_tmp5, aeri_tmp6))
   colnames(aeri_out2) <- c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -61,12 +60,11 @@ for (i in 1:length(outvar)){
   ### Sensitivity Analyses
   
   ## all time
-  
   max.idx <- which.min(abs(aalen_model$cum[,1] - 95))
   idx_seq <- round(seq(1, max.idx, length.out = max(length(1:max.idx), 1000)))
   
-  aeri_tmp7 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu_pm = mu_pm, idx = idx_seq)))
-  aeri_tmp8 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, mu_pm = mu_pm, idx = idx_seq)))
+  aeri_tmp7 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx_seq)))
+  aeri_tmp8 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, idx = idx_seq)))
   
   colnames(aeri_tmp7) <- colnames(aeri_tmp8) <-
     c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -79,8 +77,7 @@ for (i in 1:length(outvar)){
   aeri3 <- rbind(aeri3, aeri_out3)
   
   ## montonicity
-  
-  aeri_tmp0 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu_pm = mu_pm, idx = idx, monotone = FALSE)))
+  aeri_tmp0 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx, monotone = FALSE)))
   
   colnames(aeri_tmp0) <- c("time", "pm0", "pm1", "est", "lower", "upper")
   aeri_out4 <- rbind(aeri_tmp1, aeri_tmp0)
@@ -93,17 +90,17 @@ for (i in 1:length(outvar)){
   
 }
 
-write.csv(aeri1, "M:/External Users/KevinJos/output/age_time/main/aeri_age.csv")
-write.csv(aeri2, "M:/External Users/KevinJos/output/age_time/main/aeri_pm.csv")
-write.csv(aeri3, "M:/External Users/KevinJos/output/age_time/main/aeri_curve.csv")
-write.csv(aeri4, "M:/External Users/KevinJos/output/age_time/main/aeri_monotone.csv")
+write.csv(aeri1, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_age.csv")
+write.csv(aeri2, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_pm.csv")
+write.csv(aeri3, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_curve.csv")
+write.csv(aeri4, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_monotone.csv")
 
 ## Plots
 
-aeri1 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_age.csv")
-aeri2 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_pm.csv")
-aeri3 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_curve.csv")
-aeri4 <- read.csv("M:/External Users/KevinJos/output/age_time/main/aeri_monotone.csv")
+aeri1 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_age.csv")
+aeri2 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_pm.csv")
+aeri3 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_curve.csv")
+aeri4 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_monotone.csv")
 
 nice_names_1<-c('Myocardial Infarction or\nAcute Coronary Syndrome',
                 'Ischemic Stroke or\nTransient Ischemic Attack',
@@ -127,7 +124,8 @@ for (i in 1:length(outvar)) {
   
   f <- ggplot(subset(aeri1, outcome == outvar[i]), aes(x = age, y = est, colour = contrast)) +
     geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.25))+
-    labs(title = nice_names_2[i], x = "Age (Years)", y = "Risk Increase", colour = "PM2.5 Contrast")+
+    labs(title = nice_names_2[i], x = "Age (Years)", y = "Risk Increase", 
+         colour = ~ PM[2.5]*" Contrast ("*mu*g*"/"*m^3*")")+
     theme(plot.title = element_text(hjust = 0.5)) +
     geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
     theme_bw()
@@ -142,11 +140,12 @@ plotlist_2 <- list()
 for (i in 1:length(outvar)) {
   
   g <- ggplot(subset(aeri2, outcome == outvar[i]), aes(x = pm1, y = est, colour = age)) +
-    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, linetype = "dotted")+
+    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, linetype = "dotted") +
     geom_line(size = 1)+
-    labs(title = nice_names_2[i], x = "PM2.5", y = "Excess Risk due to Interaction", colour = "Age (Years)")+
+    labs(title = nice_names_2[i], x = ~ PM[2.5]*" ("*mu*g*"/"*m^3*")",
+         y = "Excess Risk", colour = "Age (Years)") +
     theme(plot.title = element_text(hjust = 0.5)) +
-    geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
+    geom_hline(yintercept = 0, color = "blue", linetype = "dashed") + 
     theme_bw()
   
   plotlist_2[[i]] <- g
@@ -160,11 +159,12 @@ plotlist_3 <- list()
 for (i in 1:length(outvar)) {
   
   h <- ggplot(subset(aeri3, outcome == outvar[i]), aes(x = time, y = est, colour = contrast)) +
-    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, linetype = "dotted")+
+    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, linetype = "dotted") +
     geom_line(size = 1)+
-    labs(title = nice_names_2[i], x = "Age (Years)", y = "Excess Risk due to Interaction", colour = "PM2.5 Contrast")+
+    labs(title = nice_names_2[i], x = "Age (Years)", y = "Excess Risk",
+         colour = ~ PM[2.5]*" Contrast ("*mu*g*"/"*m^3*")") +
     theme(plot.title = element_text(hjust = 0.5)) +
-    geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
+    geom_hline(yintercept = 0, color = "blue", linetype = "dashed") + 
     theme_bw()
   
   plotlist_3[[i]] <- h
@@ -179,7 +179,7 @@ for (i in 1:length(outvar)) {
   
   a <- ggplot(subset(aeri4, outcome == outvar[i]), aes(x = age, y = est, colour = monotone)) +
     geom_pointrange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.3))+
-    labs(title = nice_names_2[i], x = "Age (Years)", y = "Excess Risk due to Interaction", colour = "")+
+    labs(title = nice_names_2[i], x = "Age (Years)", y = "Excess Risk", colour = "")+
     theme(plot.title = element_text(hjust = 0.5)) +
     geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
     theme_bw()
@@ -191,14 +191,14 @@ for (i in 1:length(outvar)) {
 plotlist_5 <- list()
 
 for (i in 1:length(outvar)) {
-
+  
   load(paste0("M:/External Users/KevinJos/output/age_time/aalen_msm/oralsteroid_",outvar[i],'.RData'))
   load(paste0("M:/External Users/KevinJos/output/fit_data/oralsteroid_",outvar[i],'.RData'))
   
   dat <- setDT(dat)[order(bene_id, time0)]
   
-  lp0 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(0,0), c(8,12), c(0,0)))
-  lp1 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(1,1), c(8,12), c(8,12)))
+  lp0 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(0,0), c(8,12), c(12,8)))
+  lp1 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(1,1), c(12,8), c(8,12)))
   
   colnames(lp0) <- colnames(lp1) <- c(8, 12)
   rownames(lp0) <- rownames(lp1) <- aalen_model$cum[,1]
@@ -212,7 +212,7 @@ for (i in 1:length(outvar)) {
   survplot <- ggplot(lp, aes(x = age, y = survival, colour = pm, linetype = status)) +
     geom_line(size = 1.2) +
     labs(title = nice_names_2[i], x = "Age (Years)", y = "Event Probability", 
-         colour = "PM2.5", linetype = "Medication Status")+
+         colour = ~ PM[2.5]*" Contrast ("*mu*g*"/"*m^3*")", linetype = "Medication Status")+
     theme(plot.title = element_text(hjust = 0.5)) +
     theme_bw()
   
@@ -220,31 +220,31 @@ for (i in 1:length(outvar)) {
   
 }
 
-pdf("M:/External Users/KevinJos/output/age_time/main/aeri_time_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_time_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_1[[1]], plotlist_1[[2]], plotlist_1[[3]],
           plotlist_1[[4]], plotlist_1[[5]], plotlist_1[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/main/aeri_pm_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_pm_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_2[[1]], plotlist_2[[2]], plotlist_2[[3]],
           plotlist_2[[4]], plotlist_2[[5]], plotlist_2[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/main/aeri_bigtime_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_bigtime_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_3[[1]], plotlist_3[[2]], plotlist_3[[3]],
           plotlist_3[[4]], plotlist_3[[5]], plotlist_3[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/main/aeri_monotone_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_monotone_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_4[[1]], plotlist_4[[2]], plotlist_4[[3]],
           plotlist_4[[4]], plotlist_4[[5]], plotlist_4[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/main/aalen_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
+pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aalen_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
 ggarrange(plotlist_5[[1]], plotlist_5[[2]], plotlist_5[[3]],
           plotlist_5[[4]], plotlist_5[[5]], plotlist_5[[6]],
           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")

@@ -370,11 +370,8 @@ for (i in 1:length(outvar_all)){
                  ][,zip:=ifelse(event != "changeZip" & !is.na(shift(zip, n = 1, type = "lag")),
                                 shift(zip, n = 1, type = "lag"), zip), by = bene_id
                    ][order(bene_id, time0, time1)
-                     ][,drug_time:=ifelse2(event == "changeZip" & shift(event, n = 1, type = "lead") == "changePM",
-                                           shift(drug_time, n = 1, type = "lead"), drug_time), by = bene_id
-                       ][,drug_time:=ifelse2(event == "changeZip" & shift(event, n = 1, type = "lead") %in% c("changeDrug", "starMed"),
-                                             shift(drug_time, n = 1, type = "lead") - 1, drug_time), by = bene_id]
-  
+                     ][,drug_time:=ifelse(event == "changeZip" & !is.na(shift(drug_time, n = 1, type = "lag")),
+                                           shift(drug_time, n = 1, type = "lag"), drug_time), by = bene_id]
   # read in and clean the zipcode level confounders
   conf <- fread("M:/External Users/RachelNet/data/confounders/census_interpolated_zips.csv")
   

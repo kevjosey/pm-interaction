@@ -20,7 +20,8 @@ for (i in 1:length(outvar)){
   load(paste0("M:/External Users/KevinJos/output/fit_data/oralsteroid_",outvar[i],'.RData'))
   
   dat <- setDT(dat)[order(bene_id, time0)]
-  
+  mu.pm <- mean(dat$pm)
+
   idx1 <- which.min(abs(aalen_model$cum[,1] - 70))  
   idx2 <- which.min(abs(aalen_model$cum[,1] - 80))
   idx3 <- which.min(abs(aalen_model$cum[,1] - 90))
@@ -28,8 +29,8 @@ for (i in 1:length(outvar)){
   idx <- c(idx1, idx2, idx3)
   
   ## over time
-  aeri_tmp1 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx)))
-  aeri_tmp2 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, idx = idx)))
+  aeri_tmp1 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu.pm = mu.pm, idx = idx)))
+  aeri_tmp2 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, mu.pm = mu.pm, idx = idx)))
   
   colnames(aeri_tmp1) <- colnames(aeri_tmp2) <-
     c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -42,12 +43,13 @@ for (i in 1:length(outvar)){
   aeri1 <- rbind(aeri1, aeri_out1)
   
   ## over pm
+
   aeri_tmp4 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...) 
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx1))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu.pm = mu.pm, idx = idx1))))
   aeri_tmp5 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx2))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu.pm = mu.pm, idx = idx2))))
   aeri_tmp6 <- data.frame(t(sapply(seq(5, 15, by = 0.1), function(z, ...)
-    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, idx = idx3))))
+    add_interact_aalen(aalen_model, pm0 = 8, pm1 = z, mu.pm = mu.pm, idx = idx3))))
   
   aeri_out2 <- data.frame(rbind(aeri_tmp4, aeri_tmp5, aeri_tmp6))
   colnames(aeri_out2) <- c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -60,11 +62,12 @@ for (i in 1:length(outvar)){
   ### Sensitivity Analyses
   
   ## all time
+  
   max.idx <- which.min(abs(aalen_model$cum[,1] - 95))
   idx_seq <- round(seq(1, max.idx, length.out = max(length(1:max.idx), 1000)))
   
-  aeri_tmp7 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx_seq)))
-  aeri_tmp8 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, idx = idx_seq)))
+  aeri_tmp7 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu.pm = mu.pm, idx = idx_seq)))
+  aeri_tmp8 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, mu.pm = mu.pm, idx = idx_seq)))
   
   colnames(aeri_tmp7) <- colnames(aeri_tmp8) <-
     c("time", "pm0", "pm1", "est", "lower", "upper")
@@ -77,7 +80,8 @@ for (i in 1:length(outvar)){
   aeri3 <- rbind(aeri3, aeri_out3)
   
   ## montonicity
-  aeri_tmp0 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, idx = idx, monotone = FALSE)))
+  
+  aeri_tmp0 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu.pm = mu.pm, idx = idx, monotone = FALSE)))
   
   colnames(aeri_tmp0) <- c("time", "pm0", "pm1", "est", "lower", "upper")
   aeri_out4 <- rbind(aeri_tmp1, aeri_tmp0)
@@ -191,14 +195,15 @@ for (i in 1:length(outvar)) {
 plotlist_5 <- list()
 
 for (i in 1:length(outvar)) {
-  
+
   load(paste0("M:/External Users/KevinJos/output/age_time/aalen_msm/oralsteroid_",outvar[i],'.RData'))
   load(paste0("M:/External Users/KevinJos/output/fit_data/oralsteroid_",outvar[i],'.RData'))
   
   dat <- setDT(dat)[order(bene_id, time0)]
+  mu.pm <- mean(dat$pm)
   
-  lp0 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(0,0), c(8,12), c(12,8)))
-  lp1 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(1,1), c(12,8), c(8,12)))
+  lp0 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(0,0), c(8 - mu.pm,12 - mu.pm), c(0,0)))
+  lp1 <- 1 - exp(-aalen_model$cum[,-1]%*%rbind(c(1,1), c(1,1), c(8 - mu.pm,12 - mu.pm), c(8 - mu.pm,12 - mu.pm)))
   
   colnames(lp0) <- colnames(lp1) <- c(8, 12)
   rownames(lp0) <- rownames(lp1) <- aalen_model$cum[,1]

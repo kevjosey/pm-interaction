@@ -97,74 +97,27 @@ f <- ggplot(hr_plot, aes(x = nice_names, y = hr, colour = contrast)) +
         axis.title.x = element_blank()) +
   grids(linetype = "dashed")
 
-reri$pm0 <- factor(reri$pm0) 
-plotlist_1 <- list()
+reri$pm0 <- factor(reri$pm0)
+cross <- cbind(nice_names = nice_names_2, 
+               outcome = c("mi_acs", "iscstroke_tia", "newhf", "newvte", "fib", "death"))
+reri_plot <- merge(reri, cross, by = "outcome")
+reri_plot$nice_names <- factor(reri_plot$nice_names, levels = nice_names_2)
 
-for (i in 1:length(outvar)) {
-  
-  g <- ggplot(subset(reri, outcome == outvar[i]), aes(x = pm1, y = est, colour = pm0)) +
-    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, linetype = "dotted")+
-    geom_line(size = 1) +
-    labs(title = nice_names_2[i], x = ~ PM[2.5]*" ("*mu*g*"/"*m^3*")", y = "Relative Excess Risk Increase due to Interaction (%)", 
-         colour = ~"Reference "*PM[2.5]*" Concentration ("*mu*g*"/"*m^3*")")+
-    geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
-    theme_bw() +
-    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-  
-  plotlist_1[[i]] <- g
-  
-}
-
-# plotlist_2 <- list()
-# 
-# for (i in 1:length(outvar)) {
-#   
-#   print(i)
-# 
-#   load(paste0("M:/External Users/KevinJos/output/age_time/cox_msm/oralsteroid_",outvar[i],'.RData'))
-#   
-#   newdata0 <- data.frame(onMeds = c(0,0), pm_nomed = c(8,12), pm_med = c(8,8), weights.trunc = c(1,1))
-#   newdata1 <- data.frame(onMeds = c(1,1), pm_nomed = c(8,8), pm_med = c(8,12), weights.trunc = c(1,1))
-# 
-#   s.obj.0 <- survfit(model_ns, newdata = newdata0, stype = 1)
-#   s.obj.1 <- survfit(model_ns, newdata = newdata1, stype = 1)
-#   lp0 <- 1 - s.obj.0$surv
-#   lp1 <- 1 - s.obj.1$surv
-#   colnames(lp0) <- colnames(lp1) <- c('8', '12')
-#   rownames(lp0) <- s.obj.0$time
-#   rownames(lp1) <- s.obj.1$time
-# 
-#   tmp <- rbind(reshape2::melt(lp0, value_name = "survival"),
-#                reshape2::melt(lp1, value_name = "survival"))
-#   lp <- data.frame(tmp, status = rep(c("Off Steroids", "On Steroids"), each = nrow(tmp)/2))
-#   colnames(lp) <- c("age", "pm", "survival", "status")
-#   lp$pm <- factor(lp$pm, levels = c(8,12))
-#   lp$status <- factor(lp$status, levels = c("Off Steroids", "On Steroids"))
-#   lp <- lp[lp$age <= 95,]
-# 
-#   survplot <- ggplot(lp, aes(x = age, y = survival, colour = pm, linetype = status)) +
-#     geom_line(size = 1.2) +
-#     labs(title = nice_names_2[i], x = "Age (Years)", y = "Event Probability", 
-#          colour = ~ PM[2.5]*" ("*mu*g*"/"*m^3*")", linetype = "Medication Status") +
-#     theme_bw() +
-#     theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-#   
-#   plotlist_2[[i]] <- survplot
-# 
-# }
+g <- ggplot(reri_plot, aes(x = pm1, y = est, colour = pm0)) +
+  facet_wrap(nice_names ~ ., scales = "free") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, linetype = "dotted")+
+  geom_line(size = 1) +
+  labs(title = , x = ~ PM[2.5]*" ("*mu*g*"/"*m^3*")", y = "Relative Excess Risk Increase due to Interaction (%)", 
+       colour = ~"Reference "*PM[2.5]*" Concentration ("*mu*g*"/"*m^3*")")+
+  geom_hline(yintercept = 0, color = "blue", linetype = "dashed")+ 
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        legend.position = "bottom")
 
 pdf("M:/External Users/KevinJos/output/age_time/sens_msm/hr_plot.pdf", width = 12, height = 8, onefile = FALSE)
 f
 dev.off()
 
 pdf("M:/External Users/KevinJos/output/age_time/sens_msm/reri_plot.pdf", width = 12, height = 8, onefile = FALSE)
-ggarrange(plotlist_1[[1]], plotlist_1[[2]], plotlist_1[[3]],
-          plotlist_1[[4]], plotlist_1[[5]], plotlist_1[[6]],
-          ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+g
 dev.off()
-
-# pdf("M:/External Users/KevinJos/output/age_time/sens_msm/cox_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
-# ggarrange(plotlist_2[[1]], plotlist_2[[2]], plotlist_2[[3]],
-#           plotlist_2[[4]], plotlist_2[[5]], plotlist_2[[6]],
-#           ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
-# dev.off()

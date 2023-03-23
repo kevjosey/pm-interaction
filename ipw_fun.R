@@ -35,13 +35,10 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
                         exposure = data[, as.character(exposure)])
   
   if (!continuous){
-    
+  
     if (is.null(tempcall$numerator)) {
       
-      tempdat$p.numerator <- 1 - mean(tempdat$exposure, na.rm = TRUE)
-      
-      if (!censor)
-        tempdat$p.numerator[tempdat$exposure == 1] <- mean(tempdat$exposure, na.rm = TRUE)
+      mod1.pred <- mean(tempdat$exposure, na.rm = TRUE)
       
     } else {
       
@@ -49,12 +46,13 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
                      data = data, num.trees = num.trees, max.depth = max.depth, num.threads = num.threads,
                      respect.unordered.factors = "partition")
       mod1.pred <- mod1$predictions[,2]
-      tempdat$p.numerator <- 1 - c(mod1.pred)
-      
-      if (!censor)
-        tempdat$p.numerator[tempdat$exposure == 1] <- c(mod1.pred)[tempdat$exposure == 1]
-      
+
     }
+    
+    tempdat$p.numerator <- 1 - c(mod1.pred)
+    
+    if (!censor)
+      tempdat$p.numerator[tempdat$exposure == 1] <- c(mod1.pred)[tempdat$exposure == 1]
     
     mod2 <- ranger(update.formula(denominator, formula(paste0("factor(",exposure,") ~ ."))), probability = TRUE,
                    data = data, num.trees = num.trees, max.depth = max.depth, num.threads = num.threads,
@@ -65,15 +63,13 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
     if (!censor)
       tempdat$p.denominator[tempdat$exposure == 1] <- c(mod2.pred)[tempdat$exposure == 1]
     
-    tempdat$ipw.weights <- with(tempdat, p.numerator/p.denominator)
-    
-    
   } else if (continuous) {
     
+    # Numerator
     if (is.null(tempcall$numerator)) {
       
-      tempdat$p.numerator <- dnorm(tempdat$exposure, mean(tempdat$exposure, na.rm = TRUE), 
-                                   sd(tempdat$exposure, na.rm = TRUE))
+      mod1.pred <- mean(tempdat$exposure, na.rm = TRUE)
+      mod1.sd <- sd(tempdat$exposure, na.rm = TRUE)
       
     } else {
       
@@ -82,25 +78,36 @@ ipwtm_ranger <- function(exposure, numerator = NULL, denominator, id, timevar, d
                      num.threads = num.threads, respect.unordered.factors = "partition")
       mod1.pred <- mod1$predictions
       mod1.sd <- sd(tempdat$exposure - mod1.pred)
-      tempdat$p.numerator <- dnorm(tempdat$exposure, mod1.pred, mod1.sd)
       
     }
     
+    a.num <- c(tempdat$exposure - mod1.pred)/mod1.sd
+    dens.num <- density(a.num)
+    tempdat$p.numerator <- approx(x = dens.num$x, y = dens.num$y, xout = a.num)$y / mod1.sd
+    
+    # tempdat$p.numerator <- dnorm(tempdat$exposure, mod1.pred, mod1.sd)
+    
+    # Denominator
     mod2 <- ranger(update.formula(denominator, formula(paste0(exposure," ~ ."))),
                    data = data, num.trees = num.trees, max.depth = max.depth, 
                    num.threads = num.threads, respect.unordered.factors = "partition")
     mod2.pred <- mod2$predictions
     mod2.sd <- sd(tempdat$exposure - mod2.pred)
-    tempdat$p.denominator <- dnorm(tempdat$exposure, mod2.pred, mod2.sd)
     
-    tempdat$ipw.weights <- with(tempdat, p.numerator/p.denominator)
+    a.denom <- c(tempdat$exposure - mod2.pred)/mod2.sd
+    dens.denom <- density(a.denom)
+    tempdat$p.denominator <- approx(x = dens.denom$x, y = dens.denom$y, xout = a.denom)$y / mod2.sd
+    
+    # tempdat$p.denominator <- dnorm(tempdat$exposure, mod2.pred, mod2.sd)
     
   }
+  
+  tempdat$ipw.weights <- with(tempdat, p.numerator/p.denominator)
   
   if (sum(is.na(tempdat$ipw.weights)) > 0) 
     stop("NA's in weights!")
   
-  if (!(is.null(tempcall$trunc))) {
+  if (!is.null(tempcall$trunc)) {
     tempdat$weights.trunc <- tempdat$ipw.weights
     tempdat$weights.trunc[tempdat$ipw.weights < quantile(tempdat$ipw.weights, 0 + trunc)] <- quantile(tempdat$ipw.weights, 0 + trunc)
     tempdat$weights.trunc[tempdat$ipw.weights > quantile(tempdat$ipw.weights, 1 - trunc)] <- quantile(tempdat$ipw.weights, 1 - trunc)
@@ -162,27 +169,34 @@ ipwtm_gee <- function(exposure, numerator = NULL, denominator, id, timevar, data
                         timevar = data[, as.character(timevar)], 
                         exposure = data[, as.character(exposure)])
   
+  # Numerator
   if (is.null(tempcall$numerator)) {
-    
-    tempdat$p.numerator <- dnorm(tempdat$exposure, 
-                                 mean(tempdat$exposure, na.rm = TRUE),
-                                 sd(tempdat$exposure, na.rm = TRUE))
-    
+    fmla.num <- update.formula(numerator, formula(paste0(exposure," ~ 1")))
   } else {
-    
-    mod1 <- geeglm(formula = update.formula(numerator, formula(paste0(exposure," ~ ."))), data = data, 
-                   id = zip, corstr = "ar1", waves = ssn_time,  ...)
-    mod1.pred <- as.numeric(predict(mod1))
-    mod1.var <- as.numeric(summary(mod1)$dispersion[1])
-    tempdat$p.numerator <- dnorm(tempdat$exposure, c(mod1.pred), sqrt(mod1.var))
-    
+    fmla.num <- update.formula(numerator, formula(paste0(exposure," ~ .")))
   }
+    
+  mod1 <- geeglm(formula = fmla.num, data = data, id = zip, corstr = "ar1", waves = ssn_time,  ...)
+  mod1.pred <- as.numeric(predict(mod1))
+  mod1.sd <- sqrt(as.numeric(summary(mod1)$dispersion[1]))
   
+  a.num <- c(tempdat$exposure - mod1.pred)/mod1.sd
+  dens.num <- density(a.num)
+  tempdat$p.numerator <- approx(x = dens.num$x, y = dens.num$y, xout = a.num)$y / mod1.sd
+  
+  # tempdat$p.numerator <- dnorm(tempdat$exposure, mod1.pred, mod1.sd)
+  
+  # Denominator
   mod2 <- geeglm(update.formula(denominator, formula(paste0(exposure," ~ ."))), 
                  data = data, id = zip, corstr = "ar1", waves = ssn_time,  ...)
   mod2.pred <- as.numeric(predict(mod2)) 
-  mod2.var <- as.numeric(summary(mod2)$dispersion[1])
-  tempdat$p.denominator <- dnorm(tempdat$exposure, c(mod2.pred), sqrt(mod2.var))
+  mod2.sd <- sqrt(as.numeric(summary(mod2)$dispersion[1]))
+  
+  a.denom <- c(tempdat$exposure - mod2.pred)/mod2.sd
+  dens.denom <- density(a.denom)
+  tempdat$p.denominator <- approx(x = dens.denom$x, y = dens.denom$y, xout = a.denom)$y / mod2.sd
+  
+  # tempdat$p.denominator <- dnorm(tempdat$exposure, mod2.pred, mod2.sd)
   
   tempdat$ipw.weights <- with(tempdat, p.numerator/p.denominator)
   
@@ -216,20 +230,6 @@ ipwtm_gee <- function(exposure, numerator = NULL, denominator, id, timevar, data
                   call = tempcall, num.mod = mod1, den.mod = mod2))
     
   }
-  
-}
-
-cumprod_censor <- function(vec, ...) {
-  
-  if(length(vec) > 1) {
-    
-    tmp <- cumprod(vec)[-length(vec)]
-    return(c(1,tmp))
-    
-  } else
-    return(1)
-  
-  return(out)
   
 }
 

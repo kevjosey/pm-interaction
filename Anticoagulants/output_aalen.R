@@ -7,7 +7,7 @@ library(splines)
 
 source("M:/External Users/KevinJos/code/interaction.R")
 
-outvar<-c('mi_acs','iscstroke_tia','newhf','newvte','fib','death')
+outvar <- c("bleeding_allgi", "bleeding_intracranial", "epistaxis", "death") 
 aeri1 <- aeri2 <- aeri3 <- aeri4 <- data.frame()
 
 for (i in 1:length(outvar)){
@@ -16,8 +16,8 @@ for (i in 1:length(outvar)){
   
   ### Main Analysis
   
-  load(paste0("M:/External Users/KevinJos/output/age_time/aalen_msm/oralsteroid_",outvar[i],'.RData'))
-  load(paste0("M:/External Users/KevinJos/output/fit_data/oralsteroid_",outvar[i],'.RData'))
+  load(paste0("M:/External Users/KevinJos/output/age_time/aalen/oralantic_",outvar[i],'.RData'))
+  load(paste0("M:/External Users/KevinJos/output/ipw/oralantic_",outvar[i],'.RData'))
   
   dat <- setDT(dat)[order(bene_id, time0)]
   mu.pm <- mean(dat$pm)
@@ -29,6 +29,7 @@ for (i in 1:length(outvar)){
   idx <- c(idx1, idx2, idx3)
   
   ## over time
+  
   aeri_tmp1 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 8, pm1 = 12, mu.pm = mu.pm, idx = idx)))
   aeri_tmp2 <- data.frame(t(add_interact_aalen(aalen_model, pm0 = 5, pm1 = 10, mu.pm = mu.pm, idx = idx)))
   
@@ -94,31 +95,27 @@ for (i in 1:length(outvar)){
   
 }
 
-write.csv(aeri1, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_age.csv")
-write.csv(aeri2, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_pm.csv")
-write.csv(aeri3, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_curve.csv")
-write.csv(aeri4, "M:/External Users/KevinJos/output/age_time/sens_msm/aeri_monotone.csv")
+write.csv(aeri1, "M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_age.csv")
+write.csv(aeri2, "M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_pm.csv")
+write.csv(aeri3, "M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_curve.csv")
+write.csv(aeri4, "M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_monotone.csv")
 
 ## Plots
 
-aeri1 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_age.csv")
-aeri2 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_pm.csv")
-aeri3 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_curve.csv")
-aeri4 <- read.csv("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_monotone.csv")
+aeri1 <- read.csv("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_age.csv")
+aeri2 <- read.csv("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_pm.csv")
+aeri3 <- read.csv("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_curve.csv")
+aeri4 <- read.csv("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_monotone.csv")
 
-nice_names_1<-c('Myocardial Infarction or\nAcute Coronary Syndrome',
-                'Ischemic Stroke or\nTransient Ischemic Attack',
-                'Heart Failure',
-                'Venous Thromboembolism',
-                'Atrial Fibrillation',
-                'All-Cause Mortality')
+nice_names_1<-c('Gastrointestinal\n Bleeding',
+                'Intracanial\n Bleeding',
+                'Epistaxis',
+                'Death')
 
-nice_names_2<-c('Myocardial Infarction or ACS',
-                'Ischemic Stroke or TIA',
-                'Heart Failure',
-                'Venous Thromboembolism',
-                'Atrial Fibrillation',
-                'All-Cause Mortality')
+nice_names_2<-c('Gastrointestinal\n Bleeding',
+                'Intracanial\n Bleeding',
+                'Epistaxis',
+                'Death')
 
 aeri1$contrast <- factor(aeri1$contrast, levels = c("10 vs. 5", "12 vs. 8"))
 aeri1$age <- factor(aeri1$age, levels = c(70, 80, 90))
@@ -196,8 +193,8 @@ plotlist_5 <- list()
 
 for (i in 1:length(outvar)) {
 
-  load(paste0("M:/External Users/KevinJos/output/age_time/aalen_msm/oralsteroid_",outvar[i],'.RData'))
-  load(paste0("M:/External Users/KevinJos/output/fit_data/oralsteroid_",outvar[i],'.RData'))
+  load(paste0("M:/External Users/KevinJos/output/age_time/aalen/oralantic_",outvar[i],'.RData'))
+  load(paste0("M:/External Users/KevinJos/output/ipw/oralantic_",outvar[i],'.RData'))
   
   dat <- setDT(dat)[order(bene_id, time0)]
   mu.pm <- mean(dat$pm)
@@ -209,10 +206,10 @@ for (i in 1:length(outvar)) {
   rownames(lp0) <- rownames(lp1) <- aalen_model$cum[,1]
   tmp <- rbind(reshape2::melt(lp0, value_name = "survival"),
                reshape2::melt(lp1, value_name = "survival"))
-  lp <- data.frame(tmp,status = rep(c("Off Steroids", "On Steroids"), each = nrow(tmp)/2))
+  lp <- data.frame(tmp,status = rep(c("Off Anticoagulants", "On Anticoagulants"), each = nrow(tmp)/2))
   colnames(lp) <- c("age", "pm", "survival", "status")
   lp$pm <- factor(lp$pm, levels = c(8,12))
-  lp$status <- factor(lp$status, levels = c("Off Steroids", "On Steroids"))
+  lp$status <- factor(lp$status, levels = c("Off Anticoagulants", "On Anticoagulants"))
   
   survplot <- ggplot(lp, aes(x = age, y = survival, colour = pm, linetype = status)) +
     geom_line(size = 1.2) +
@@ -225,32 +222,27 @@ for (i in 1:length(outvar)) {
   
 }
 
-pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_time_plot.pdf", width = 12, height = 8, onefile = FALSE)
-ggarrange(plotlist_1[[1]], plotlist_1[[2]], plotlist_1[[3]],
-          plotlist_1[[4]], plotlist_1[[5]], plotlist_1[[6]],
-          ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+pdf("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_time_plot.pdf", width = 10, height = 10, onefile = FALSE)
+ggarrange(plotlist_1[[1]], plotlist_1[[2]], plotlist_1[[3]], plotlist_1[[4]],
+          ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_pm_plot.pdf", width = 12, height = 8, onefile = FALSE)
-ggarrange(plotlist_2[[1]], plotlist_2[[2]], plotlist_2[[3]],
-          plotlist_2[[4]], plotlist_2[[5]], plotlist_2[[6]],
-          ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+pdf("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_pm_plot.pdf", width = 10, height = 10, onefile = FALSE)
+ggarrange(plotlist_2[[1]], plotlist_2[[2]], plotlist_2[[3]], plotlist_2[[4]],
+          ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_bigtime_plot.pdf", width = 12, height = 8, onefile = FALSE)
-ggarrange(plotlist_3[[1]], plotlist_3[[2]], plotlist_3[[3]],
-          plotlist_3[[4]], plotlist_3[[5]], plotlist_3[[6]],
-          ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+pdf("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_bigtime_plot.pdf", width = 10, height = 10, onefile = FALSE)
+ggarrange(plotlist_3[[1]], plotlist_3[[2]], plotlist_3[[3]], plotlist_3[[4]],
+          ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aeri_monotone_plot.pdf", width = 12, height = 8, onefile = FALSE)
-ggarrange(plotlist_4[[1]], plotlist_4[[2]], plotlist_4[[3]],
-          plotlist_4[[4]], plotlist_4[[5]], plotlist_4[[6]],
-          ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+pdf("M:/External Users/KevinJos/output/age_time/anticoagulants/aeri_monotone_plot.pdf", width = 10, height = 10, onefile = FALSE)
+ggarrange(plotlist_4[[1]], plotlist_4[[2]], plotlist_4[[3]], plotlist_4[[4]],
+          ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 
-pdf("M:/External Users/KevinJos/output/age_time/sens_msm/aalen_survival_plot.pdf", width = 12, height = 8, onefile = FALSE)
-ggarrange(plotlist_5[[1]], plotlist_5[[2]], plotlist_5[[3]],
-          plotlist_5[[4]], plotlist_5[[5]], plotlist_5[[6]],
-          ncol = 3, nrow = 2, common.legend = TRUE, legend = "bottom")
+pdf("M:/External Users/KevinJos/output/age_time/anticoagulants/aalen_survival_plot.pdf", width = 10, height = 10, onefile = FALSE)
+ggarrange(plotlist_5[[1]], plotlist_5[[2]], plotlist_5[[3]], plotlist_5[[4]],
+          ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()

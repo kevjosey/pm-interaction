@@ -7,7 +7,7 @@ This repository contains code used to fit history adjusted marginal structural C
 
 [`ipw_fun.R`](https://github.com/kevjosey/pm-steroid/blob/main/Functions/ipw_fun.R) Functions for generating inverse probability weights (with Random Forest or GEE). 
 
-### Analysis
+### Steroids
 [`Steroids/descriptives.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/descriptives.R) Contains code for finding descriptive statistics that populate Tables 1, 2, and 3. 
 
 [`Steroids/ipw_models.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/ipw_models.R) Code for transforming data (wide-format) into a counting process with season/drug-quarter changes. Also includes the code that fits the random forest models of the (generalized) propensity scores used to construct the inverse probability weights.

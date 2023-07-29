@@ -3,7 +3,6 @@ library(survival)
 library(data.table)
 library(ggplot2)
 library(ggpubr)
-library(survminer)
 library(sandwich)
 
 source("M:/External Users/KevinJos/code/interaction.R")
@@ -15,8 +14,8 @@ for (i in 1:length(outvar)){
   
   print(i)
   
-  load(paste0("M:/External Users/KevinJos/output/age_time/cox/oralsteroid_",outvar[i],'.RData'))
-  load(paste0("M:/External Users/KevinJos/data/steroids/fit_data/oralsteroid_",outvar[i],'.RData'))
+  load(paste0("M:/External Users/KevinJos/output/age_time/cox_spline/oralsteroid_",outvar[i],'.RData'))
+  load(paste0("M:/External Users/KevinJos/output/age_time/cox_spline/boot/oralsteroid_",outvar[i],'.RData'))
   
   # outcome coefficients 
   coef_val <- cbind(outcome = outvar[i], summary(model_ns)$coefficients)
@@ -30,7 +29,11 @@ for (i in 1:length(outvar)){
   hr_out$descript <- rep(c('Corticosteroid Use','Increasing PM while off Corticosteroids','Increasing PM while on Corticosteroids'), 2)
   hr_out$outcome <- outvar[i]
   hr_out$contrast <- paste0(hr_out$pm1, " vs. ", hr_out$pm0)
-  hr <- rbind(hr, hr_out)
+  hr <- merge(rbind(hr, hr_out), out_list$hr_se, by = c("outcome", "descript", "pm0"))
+  
+  # New bootstrap estimates
+  hr$lower <- exp(hr$log.hr - 1.96*hr$boot_se)
+  hr$upper <- exp(hr$log.hr + 1.96*hr$boot_se)
   
   reri_tmp1 <- data.frame(t(sapply(seq(8, 13, by = 0.1), function(z, ...)
     add_interact_cox(model_ns, pm0 = 8, pm1 = z))))
@@ -44,7 +47,11 @@ for (i in 1:length(outvar)){
   reri_out <- reri_out[order(reri_out$pm0, reri_out$pm1),]
   
   colnames(reri_out) <- c("est","lower","upper","pm0","pm1","outcome","contrast")
-  reri <- rbind(reri, reri_out)
+  reri <- merge(rbind(reri, reri_out), out_list$reri_se, by = c("outcome", "pm0", "pm1"))
+  
+  # New bootstrap CI estimates
+  reri$lower <- exp(reri$est - 1.96*reri$boot_se)
+  reri$upper <- exp(reri$est + 1.96*reri$boot_se)
   
 }
 

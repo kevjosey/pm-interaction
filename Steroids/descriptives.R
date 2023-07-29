@@ -12,7 +12,7 @@ library(zoo)
 ndig <- 2 # significant figures
 
 ## read in the full dataset ##
-cohort <- read_sas("M:/External Users/Shared/To RachelNet/cohortfinalaug2021_a2c2.sas7bdat")
+cohort <- read_sas("M:/External Users/Shared/To RachelNet/cohortfinaljan2023_a2c2.sas7bdat")
 names(cohort)<-tolower(names(cohort))
 setDT(cohort)
 medclass <- "oralsteroid"
@@ -26,6 +26,15 @@ cohort <- cohort[,enddate:=pmin(deathdate,dtend,ymd("2016-11-30"),
             # if a person first takes meds after a terminating event, treat as though they never take meds
             ][!is.na(firstmed) & firstmed>enddate,':='(firstmed=NA,lastmed=NA)]
 
+cohort[,qc_type:=0]
+cohort[(ind_preindex3m_copd_asthma + ind_prestrd3m_copd_asthma) >= 1 & 
+         (ind_preindex3m_autoimmune + ind_prestrd3m_autoimmune) < 1, qc_type:=1]
+cohort[(ind_preindex3m_copd_asthma + ind_prestrd3m_copd_asthma) < 1 & 
+         (ind_preindex3m_autoimmune + ind_prestrd3m_autoimmune) >= 1, qc_type:=2]
+cohort[(ind_preindex3m_copd_asthma + ind_prestrd3m_copd_asthma) >= 1 & 
+         (ind_preindex3m_autoimmune + ind_prestrd3m_autoimmune) >= 1, qc_type:=3]
+cohort[,qc_type:=factor(qc_type)]
+
 ## remove sex=0 (there's only one person with this) ##
 cohort <- cohort[!(sex=='0')]
 
@@ -34,6 +43,7 @@ firstmed <- cohort$firstmed
 lastmed <- cohort$lastmed
 onMeds <- firstmed <= enddate
 onMeds[is.na(onMeds)] <- FALSE
+qc_type <- cohort$qc_type
 
 ## write a function to add a row for continuous variables
 
@@ -74,29 +84,29 @@ add_cat <- function(x,nm_var,nm_level,onMeds=NULL){
 
 ## age ##
 table1<-c(add_cont(x=cohort[,age],nm_var='Age at Index',nm_level=''),
-          add_cont(x=cohort[,age],nm_var='Age at Index',nm_level='',onMeds=onMeds))
+          add_cont(x=cohort[,age],nm_var='Age at Index',nm_level='',onMeds=(qc_type == 2 | qc_type == 3)))
 
 ## sex ##
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,sex]==1),nm_var='Male',nm_level=''),
-                       add_cat(x=as.numeric(cohort[,sex]==1),nm_var='Male',nm_level='',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,sex]==1),nm_var='Male',nm_level='',onMeds=(qc_type == 2 | qc_type == 3))))
 
 ## race ##
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,race]==1),nm_var='Race',nm_level='White'),
-                       add_cat(x=as.numeric(cohort[,race]==1),nm_var='Race',nm_level='White',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,race]==1),nm_var='Race',nm_level='White',onMeds=(qc_type == 2 | qc_type == 3))))
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,race]==2),nm_var='Race',nm_level='Black'),
-                       add_cat(x=as.numeric(cohort[,race]==2),nm_var='Race',nm_level='Black',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,race]==2),nm_var='Race',nm_level='Black',onMeds=(qc_type == 2 | qc_type == 3))))
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,race]==5),nm_var='Race',nm_level='Hispanic'),
-                       add_cat(x=as.numeric(cohort[,race]==5),nm_var='Race',nm_level='Hispanic',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,race]==5),nm_var='Race',nm_level='Hispanic',onMeds=(qc_type == 2 | qc_type == 3))))
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,race]==4),nm_var='Race',nm_level='Asian'),
-                       add_cat(x=as.numeric(cohort[,race]==4),nm_var='Race',nm_level='Asian',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,race]==4),nm_var='Race',nm_level='Asian',onMeds=(qc_type == 2 | qc_type == 3))))
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,race]==6),nm_var='Race',nm_level='North American Native'),
-                       add_cat(x=as.numeric(cohort[,race]==6),nm_var='Race',nm_level='North American Native',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,race]==6),nm_var='Race',nm_level='North American Native',onMeds=(qc_type == 2 | qc_type == 3))))
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,race]==3),nm_var='Race',nm_level='Other'),
-                       add_cat(x=as.numeric(cohort[,race]==3),nm_var='Race',nm_level='Other',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,race]==3),nm_var='Race',nm_level='Other',onMeds=(qc_type == 2 | qc_type == 3))))
 
 ## dual eligible ##
 table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,dualeligible]==1),nm_var='Medicaid Eligible',nm_level=''),
-                       add_cat(x=as.numeric(cohort[,dualeligible]==1),nm_var='Medicaid Eligible',nm_level='',onMeds=onMeds)))
+                       add_cat(x=as.numeric(cohort[,dualeligible]==1),nm_var='Medicaid Eligible',nm_level='',onMeds=(qc_type == 2 | qc_type == 3))))
 
 ## chronic conditions ##
 cc<-c("chronic_tha", "chronic_tka","chronic_acs","chronic_cancer","chronic_fib","chronic_hemstroke","chronic_hf",       
@@ -107,24 +117,24 @@ hx <- c("hx_n_hospvisits", "hx_n_ervisits", "hx_n_outpvisits", "hx_n_meds")
 
 for (i in 1:length(cc)){
   table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,get(cc[i])]==1),nm_var='Chronic Condition',nm_level=cc[i]),
-                         add_cat(x=as.numeric(cohort[,get(cc[i])]==1),nm_var='Chronic Condition',nm_level=cc[i],onMeds=onMeds)))
+                         add_cat(x=as.numeric(cohort[,get(cc[i])]==1),nm_var='Chronic Condition',nm_level=cc[i],onMeds=(qc_type == 2 | qc_type == 3))))
 }
 
 for (i in 1:length(dx)){
   table1<-rbind(table1,c(add_cat(x=as.numeric(cohort[,get(dx[i])]==1),nm_var='Comorbidities',nm_level=dx[i]),
-                         add_cat(x=as.numeric(cohort[,get(dx[i])]==1),nm_var='Comorbidities',nm_level=dx[i],onMeds=onMeds)))
+                         add_cat(x=as.numeric(cohort[,get(dx[i])]==1),nm_var='Comorbidities',nm_level=dx[i],onMeds=(qc_type == 2 | qc_type == 3))))
 }
 
 for (i in 1:length(hx)){
   table1<-rbind(table1,c(add_cont(x=as.numeric(cohort[,get(hx[i])]),nm_var='Hospitalization History',nm_level=hx[i]),
-                         add_cont(x=as.numeric(cohort[,get(hx[i])]),nm_var='Hospitalization History',nm_level=hx[i],onMeds=onMeds)))
+                         add_cont(x=as.numeric(cohort[,get(hx[i])]),nm_var='Hospitalization History',nm_level=hx[i],onMeds=(qc_type == 2 | qc_type == 3))))
 }
 
 table1 <- as.data.frame(table1)
 names(table1)<-c('Variable','Level', 'Size - All', 'Mean (or N) - All', 'SD (or %) - All', 
                  'Size - No Meds','Mean (or N) - No Meds','SD (or %) - No Meds',
                  'Size - Meds', 'Mean (or N) Meds','SD (or %) Meds')
-write.csv(table1, "M:/External Users/KevinJos/output/steroids_table1.csv")
+write.csv(table1, "M:/External Users/KevinJos/output/steroids_table1_auto.csv")
 
 # Table 2 -----------------------------------------------------------------
 

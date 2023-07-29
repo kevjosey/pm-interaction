@@ -2,41 +2,40 @@ library(data.table)
 library(survival)
 library(splines)
 library(haven)
-library(timereg)
 
 ### Analysis
 
-filenames <- list.files("M:/External Users/KevinJos/data/steroids/fit_data/", full.names = TRUE)
-fnames <- list.files("M:/External Users/KevinJos/data/steroids/fit_data/", full.names = FALSE)
+filenames <- list.files("M:/External Users/KevinJos/output/ipw/steroids/", full.names = TRUE)[-1]
+fnames <- list.files("M:/External Users/KevinJos/output/ipw/steroids/", full.names = FALSE)[-1]
 
 ## cox spline models
-for (i in 1:length(fnames)) {
+for (i in 1) {
   
   print(fnames[i])
   load(filenames[i])
   
   setDT(dat)
-  
-  ## msm code
   dat$bene_id_drug <- paste(dat$bene_id, dat$drug_time)
   
+  ## msm code
   medFit <- dat[!duplicated(bene_id_drug)]
   medFit <- medFit[order(medFit$bene_id, medFit$time0)]
   medFit$ipw_temp <- unsplit(lapply(split(with(medFit, ipw_med*ipw_censor), medFit$bene_id),
                                     cumprod), medFit$bene_id)
-  
+
   dat_mod <- merge(dat, data.frame(medFit[,c("bene_id","drug_time","ipw_temp")]),
                     by = c("bene_id","drug_time"), all.x = TRUE)
-  
+
   dat_mod$ipw <- dat_mod$ipw_temp*dat_mod$ipw_pm
+  
+  ## hamsm code
+  # dat_mod <- dat
+  # dat_mod$ipw <- dat_mod$ipw_censor*dat_mod$ipw_med*dat_mod$ipw_pm
   
   # truncation
   dat_mod$ipw.trunc <- dat_mod$ipw
-  dat_mod$ipw.trunc[dat_mod$ipw > quantile(dat_mod$ipw, 0.99)] <- quantile(dat_mod$ipw, 0.99)
-  dat_mod$ipw.trunc[dat_mod$ipw < quantile(dat_mod$ipw, 0.01)] <- quantile(dat_mod$ipw, 0.01)
-  
-  ## hamsm code
-  # dat_mod$ipw <- dat_mod$ipw_censor*dat_mod$ipw_med*dat_mod$ipw_pm
+  dat_mod$ipw.trunc[dat_mod$ipw > quantile(dat_mod$ipw, 0.95)] <- quantile(dat_mod$ipw, 0.95)
+  dat_mod$ipw.trunc[dat_mod$ipw < quantile(dat_mod$ipw, 0.05)] <- quantile(dat_mod$ipw, 0.05)
   
   ## index time scale
   # dat_mod$time0 <- with(dat_mod,(time0 - age)*365.25)
@@ -61,11 +60,11 @@ for (i in 1:length(fnames)) {
   ## spline cox model
   dat_mod <- setDF(dat_mod[order(dat_mod$bene_id, dat_mod$time0),])
   model_ns <- coxph(Surv(time0, time1, failed) ~ onMeds + pspline(pm_nomed, 4) + pspline(pm_med, 4) +
-                      cluster(bene_id), id = bene_id, weights = ipw.trunc, 
+                       strata(qc_type) + cluster(bene_id), id = bene_id, weights = ipw.trunc,
                     data = dat_mod, robust = TRUE, model = TRUE)
   
   ## save models
-  save(model_ns, file=paste0("M:/External Users/KevinJos/output/age_time/cox/",fnames[i]))
+  save(model_ns, file=paste0("M:/External Users/KevinJos/output/age_time/cox_spline/",fnames[i]))
   
   rm(model_ns, dat, dat_mod, medFit)
   gc()

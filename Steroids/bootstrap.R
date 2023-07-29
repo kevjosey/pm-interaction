@@ -59,7 +59,7 @@ for (i in 1:length(outvar_all)){
   u.zip <- unique(cpFit$zip)
   m <- length(u.zip)/log(length(u.zip))
 
-  boot_list <- lapply(1:boot.iter, function(b, ...) {
+  boot_list <- mclapply(1:boot.iter, function(b, ...) {
     
     print(b)
     
@@ -198,7 +198,7 @@ for (i in 1:length(outvar_all)){
     rm(model_ns)
     return(list(coef = coef_out, reri = reri_out, hr = hr_out))
     
-  })
+  }, mc.cores = 16)
   
   coefs <- do.call(rbind, lapply(boot_list, function(item, ...) item$coefs))
   reri <- do.call(rbind, lapply(boot_list, function(item, ...) item$est))

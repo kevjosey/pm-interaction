@@ -8,6 +8,8 @@
 
 [`Steroids/cox_models.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/cox_models.R) Code for fitting the proportional hazard models relating PM2.5 and steroids to each of the six health outcomes that we examined in the manuscript.
 
+[`Steroids/bootstrap.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/bootstrap.R) Fits m-out-of-n bootstrap SEs.
+
 [`Steroids/output.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/output.R) Creates tables and figures from the fitted proportional hazard model.
 
 ### Data

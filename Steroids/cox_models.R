@@ -34,8 +34,8 @@ for (i in 1) {
   
   # truncation
   dat_mod$ipw.trunc <- dat_mod$ipw
-  dat_mod$ipw.trunc[dat_mod$ipw > quantile(dat_mod$ipw, 0.95)] <- quantile(dat_mod$ipw, 0.95)
-  dat_mod$ipw.trunc[dat_mod$ipw < quantile(dat_mod$ipw, 0.05)] <- quantile(dat_mod$ipw, 0.05)
+  dat_mod$ipw.trunc[dat_mod$ipw > quantile(dat_mod$ipw, 0.975)] <- quantile(dat_mod$ipw, 0.975)
+  dat_mod$ipw.trunc[dat_mod$ipw < quantile(dat_mod$ipw, 0.025)] <- quantile(dat_mod$ipw, 0.025)
   
   ## index time scale
   # dat_mod$time0 <- with(dat_mod,(time0 - age)*365.25)

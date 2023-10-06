@@ -122,7 +122,8 @@ ipwtm_xgb <- function(exposure, numerator = NULL, denominator, id, timevar, data
     } else {
       mat <- model.matrix(numerator, data = data)
       mod1 <- xgboost(data = mat, label = tempdat$exposure, objective = "binary:logistic", 
-                      nrounds = num.trees, max_depth = max.depth, nthread = num.threads)
+                      nrounds = num.trees, max_depth = max.depth, nthread = num.threads,
+                      early_stopping_rounds = 3)
       mod1.pred <- predict(mod1, newdata = mat)
     }
     
@@ -133,7 +134,8 @@ ipwtm_xgb <- function(exposure, numerator = NULL, denominator, id, timevar, data
     
     mat <- model.matrix(denominator, data = data)
     mod2 <- xgboost(data = mat, label = tempdat$exposure, objective = "binary:logistic", 
-                    nrounds = num.trees, max_depth = max.depth, nthread = num.threads)
+                    nrounds = num.trees, max_depth = max.depth, nthread = num.threads,
+                    early_stopping_rounds = 3)
     mod2.pred <- predict(mod2, newdata = mat)
     tempdat$p.denominator <- 1 - mod2.pred
     
@@ -148,14 +150,16 @@ ipwtm_xgb <- function(exposure, numerator = NULL, denominator, id, timevar, data
     } else {
       mat <- model.matrix(numerator, data = data)
       mod1 <- xgboost(data = mat, label = tempdat$exposure, objective = "reg:squarederror", 
-                      nrounds = num.trees, max_depth = max.depth, nthread = num.threads)
+                      nrounds = num.trees, max_depth = max.depth, nthread = num.threads,
+                      early_stopping_rounds = 3)
       mod1.pred <- predict(mod1, newdata = mat)
       mod1.sd <- sd(tempdat$exposure - mod1.pred)
     }
     
     mat <- model.matrix(denominator, data = data)
     mod2 <- xgboost(data = mat, label = tempdat$exposure, objective = "reg:squarederror", 
-                    nrounds = num.trees, max_depth = max.depth, nthread = num.threads)
+                    nrounds = num.trees, max_depth = max.depth, nthread = num.threads,
+                    early_stopping_rounds = 3)
     mod2.pred <- predict(mod2, newdata = mat)
     mod2.sd <- sd(tempdat$exposure - mod2.pred)
     

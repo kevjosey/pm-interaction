@@ -77,7 +77,7 @@ for (i in 1:length(outvar_all)){
     
     pm_w <- ipwtm_xgb(exposure = "pm", denominator = fmla.denom.pm,
                      id = "zip",timevar = "ssn_time", data = pmFit, trunc = NULL, 
-                     continuous = TRUE, num.trees = 50, max.depth = 8, num.threads = 16)
+                     continuous = TRUE, num.trees = 500, max.depth = 8, num.threads = 16)
     
     cpBoot <- merge(cpBoot, data.frame(pmFit[,c("zip","ssn_time")], ipw_pm = pm_w$ipw.weights),
                    by = c("zip","ssn_time"), all.x = TRUE)
@@ -102,7 +102,7 @@ for (i in 1:length(outvar_all)){
     
     med_w <- ipwtm_xgb(exposure = "onMeds", denominator = fmla.denom.med, numerator = formula("~ pm"),
                       id = "boot.bene_id",timevar = "drug_time", data = medFit, trunc = NULL, 
-                      continuous = FALSE, censor = FALSE, num.trees = 50, max.depth = 8, num.threads = 16)
+                      continuous = FALSE, censor = FALSE, num.trees = 200, max.depth = 8, num.threads = 16)
     
     cpBoot <- merge(cpBoot, data.frame(medFit[,c("boot.bene_id","drug_time")], ipw_med = med_w$ipw.weights),
                     by = c("boot.bene_id","drug_time"), all.x = TRUE)
@@ -127,7 +127,7 @@ for (i in 1:length(outvar_all)){
     
     censor_w <- ipwtm_xgb(exposure = "censored", denominator = fmla.denom.censor, numerator = formula("~ onMeds*pm"),
                           id = "boot.bene_id", timevar = "drug_time", data = censorFit, trunc = NULL,
-                          continuous = FALSE, censor = TRUE, num.trees = 50, max.depth = 8, num.threads = 16)
+                          continuous = FALSE, censor = TRUE, num.trees = 200, max.depth = 8, num.threads = 16)
     
     cpBoot <- merge(cpBoot, data.frame(censorFit[,c("boot.bene_id","drug_time")], ipw_censor = censor_w$ipw.weights),
                     by = c("boot.bene_id","drug_time"), all.x = TRUE)

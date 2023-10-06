@@ -44,7 +44,7 @@ for (i in 1:length(outvar_all)){
   # Compute PM IPW weights using the ipwtm_xgb function
   pm_w <- ipwtm_xgb(exposure = "pm", denominator = fmla.denom.pm, 
                     id = "zip",timevar = "ssn_time", data = pmFit, trunc = NULL,
-                    continuous = TRUE, num.trees = 50, max.depth = 6, num.threads = 8)
+                    continuous = TRUE, num.trees = 500, max.depth = 6, num.threads = 8)
   
   save_pm <- data.table(pmFit[,c("zip","ssn_time")], ipw_pm = pm_w$ipw.weights)
   
@@ -67,7 +67,7 @@ for (i in 1:length(outvar_all)){
 
   med_w <- ipwtm_xgb(exposure = "onMeds", denominator = fmla.denom.med, numerator = formula("~ pm"),
                      id = "bene_id",timevar = "drug_time", data = medFit, trunc = NULL, 
-                     continuous = FALSE, censor = FALSE, num.trees = 25, max.depth = 6, num.threads = 8)
+                     continuous = FALSE, censor = FALSE, num.trees = 200, max.depth = 6, num.threads = 8)
 
   save_med <- data.table(medFit[,c("bene_id","drug_time")], ipw_med = med_w$ipw.weights)
   
@@ -92,7 +92,7 @@ for (i in 1:length(outvar_all)){
 
   censor_w <- ipwtm_xgb(exposure = "censored", denominator = fmla.denom.censor, numerator = formula("~ onMeds*pm"),
                         id = "bene_id", timevar = "drug_time", data = censorFit, trunc = NULL,
-                        continuous = FALSE, censor = TRUE, num.trees = 25, max.depth = 6, num.threads = 8)
+                        continuous = FALSE, censor = TRUE, num.trees = 200, max.depth = 6, num.threads = 8)
   
   save_censor <- data.table(censorFit[,c("bene_id","drug_time")], ipw_censor = censor_w$ipw.weights)
   

@@ -6,7 +6,7 @@ Detailed descriptions of the various scripts are available within their respecti
 
 ### Functions
 
-[`interaction.R`](https://github.com/kevjosey/pm-interaction/blob/main/interaction.R) Functions for evaluating additive and multiplicative interactions. 
+[`interaction.R`](https://github.com/kevjosey/pm-interaction/blob/main/Functions/interaction.R) Functions for evaluating additive and multiplicative interactions. 
 
-[`ipw_fun.R`](https://github.com/kevjosey/pm-interaction/blob/main/ipw_fun.R) Functions for generating inverse probability weights (with Random Forest, XGBoost, or GEE). 
+[`ipw_fun.R`](https://github.com/kevjosey/pm-interaction/blob/main/Functions/ipw_fun.R) Functions for generating inverse probability weights (with Random Forest, XGBoost, or GEE). 
 

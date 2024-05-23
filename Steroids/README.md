@@ -2,7 +2,7 @@
 
 [`Steroids/descriptives.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/descriptives.R) Contains code for finding descriptive statistics that populate Tables 1, 2, and 3. 
 
-[`Steroids/data_cleaning.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/ipw_models.R) Code for transforming data (wide-format) into a counting process with season/drug-quarter intervals (long-format).
+[`Steroids/data_cleaning.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/data_cleaning.R) Code for transforming data (wide-format) into a counting process with season/drug-quarter intervals (long-format).
 
 [`Steroids/ipw_models.R`](https://github.com/kevjosey/pm-steroid/blob/main/Steroids/ipw_models.R) Code used for fitting the gradient boosted forests which model the mean of the (generalized) propensity scores and are subsequently used to construct the inverse probability weights.
 
